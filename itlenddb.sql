@@ -1,0 +1,61 @@
+CREATE TABLE USUARIO (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Username VARCHAR(50) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    Rol ENUM('Admin','Tecnico','Empleado') NOT NULL,
+    AvatarUrl VARCHAR(255),
+    email VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE EMPLEADO (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Nombre VARCHAR(50) NOT NULL,
+    Apellido VARCHAR(100) NOT NULL,
+    DNI VARCHAR(10) NOT NULL UNIQUE,
+    Telefono VARCHAR(20),
+    UsuarioId INT UNIQUE,
+    
+    FOREIGN KEY (UsuarioId) REFERENCES USUARIO(Id)
+);
+
+CREATE TABLE CATEGORIA (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    Descripcion VARCHAR(255)
+);
+
+CREATE TABLE EQUIPO (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Modelo VARCHAR(100) NOT NULL,
+    NumeroSerie VARCHAR(100) NOT NULL UNIQUE,
+    Estado ENUM('Disponible','Prestado','En Mantenimiento') NOT NULL DEFAULT 'Disponible',
+    RutaArchivoGarantia VARCHAR(255),
+    CategoriaId INT NOT NULL,
+
+    FOREIGN KEY (CategoriaId) REFERENCES CATEGORIA(Id) 
+);
+
+CREATE TABLE SOLICITUD (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    EmpleadoId INT NOT NULL,
+    CategoriaId INT NOT NULL,
+    Motivo VARCHAR(250),
+    TiempoNecesario VARCHAR(50) NOT NULL,
+    FechaSolicitud DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Estado ENUM('Pendiente','Aprobada','Rechazada') NOT NULL DEFAULT 'Pendiente',
+    
+    FOREIGN KEY (EmpleadoId) REFERENCES EMPLEADO(Id),
+    FOREIGN KEY (CategoriaId) REFERENCES CATEGORIA(Id)
+);
+
+CREATE TABLE PRESTAMO (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    EquipoId INT NOT NULL,
+    EmpleadoId INT NOT NULL,
+    FechaPrestamo DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FechaDevolucionEstimada DATETIME NULL,
+    FechaDevolucionReal DATETIME NULL,
+    
+    FOREIGN KEY (EquipoId) REFERENCES EQUIPO(Id),
+    FOREIGN KEY (EmpleadoId) REFERENCES EMPLEADO(Id)
+);

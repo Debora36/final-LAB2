@@ -1,0 +1,86 @@
+@model final_LAB2.Models.Usuario
+@{
+    ViewData["Title"] = "Crear Usuario";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Create" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username" class="form-control" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Rol" class="form-label"></label>
+                            <select asp-for="Rol" class="form-select">
+                                <option value="">Seleccionar...</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Tecnico">Técnico</option>
+                                <option value="Empleado">Empleado</option>
+                            </select>
+                            <span asp-validation-for="Rol" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" type="password" class="form-control" />
+                            <small class="text-muted d-block">Mínimo 6 caracteres</small>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ConfirmPassword" class="form-label">Confirmar contraseña</label>
+                            <input type="password" id="ConfirmPassword" name="confirmPassword" class="form-control" required />
+                            <span class="text-danger" id="confirmPasswordError"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Crear Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const password = document.querySelector('input[name="Password"]').value;
+            const confirmPassword = document.getElementById('ConfirmPassword').value;
+            const errorSpan = document.getElementById('confirmPasswordError');
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                errorSpan.textContent = 'Las contraseñas no coinciden.';
+            } else {
+                errorSpan.textContent = '';
+            }
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

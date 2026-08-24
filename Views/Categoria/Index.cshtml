@@ -1,0 +1,215 @@
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Gestión de Categorías";
+    var csrfToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+
+<meta name="csrf-token" content="@csrfToken" />
+
+<div id="app" class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="card-title mb-0 fw-bold text-primary">
+                        <i class="fas fa-tags me-2"></i>Gestión de Categorías
+                    </h3>
+                    <button class="btn btn-primary" @@click="abrirCrear">
+                        <i class="fas fa-plus me-1"></i>Nueva Categoría
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div v-if="mensajeError" class="alert alert-danger alert-dismissible fade show">
+                        {{ mensajeError }}
+                        <button type="button" class="btn-close" @@click="mensajeError = ''"></button>
+                    </div>
+                    <div v-if="mensajeExito" class="alert alert-success alert-dismissible fade show">
+                        {{ mensajeExito }}
+                        <button type="button" class="btn-close" @@click="mensajeExito = ''"></button>
+                    </div>
+
+                    <div v-if="cargando" class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                    </div>
+
+                    <table v-else class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="categorias.length === 0">
+                                <td colspan="4" class="text-center text-muted py-4">No hay categorías registradas</td>
+                            </tr>
+                            <tr v-for="categoria in categorias" :key="categoria.id">
+                                <td><span class="badge bg-info">{{ categoria.id }}</span></td>
+                                <td><strong>{{ categoria.nombre }}</strong></td>
+                                <td>{{ categoria.descripcion || '-' }}</td>
+                                <td class="text-center">
+                                    <a :href="'/Equipo?categoriaId=' + categoria.id" class="btn btn-sm btn-outline-info" title="Ver equipos">
+                                        <i class="fas fa-desktop"></i> Ver equipos
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-warning" @@click="abrirEditar(categoria)" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @@click="eliminar(categoria)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar -->
+    <div class="modal fade" id="categoriaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ editando ? 'Editar Categoría' : 'Nueva Categoría' }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" v-model="form.nombre" maxlength="50" />
+                        <span class="text-danger small">{{ erroresForm.nombre }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" v-model="form.descripcion" maxlength="255"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @@click="guardar" :disabled="guardando">
+                        <i class="fas fa-save me-1"></i>{{ guardando ? 'Guardando...' : 'Guardar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    categorias: [],
+                    cargando: true,
+                    guardando: false,
+                    editando: false,
+                    form: { id: null, nombre: '', descripcion: '' },
+                    erroresForm: {},
+                    mensajeError: '',
+                    mensajeExito: '',
+                    modal: null
+                };
+            },
+            mounted() {
+                this.modal = new bootstrap.Modal(document.getElementById('categoriaModal'));
+                this.cargarCategorias();
+            },
+            methods: {
+                csrfToken() {
+                    return document.querySelector('meta[name="csrf-token"]').content;
+                },
+                async cargarCategorias() {
+                    this.cargando = true;
+                    try {
+                        const resp = await fetch('/Categoria/Listar');
+                        this.categorias = await resp.json();
+                    } catch (e) {
+                        this.mensajeError = 'Error al cargar las categorías.';
+                    } finally {
+                        this.cargando = false;
+                    }
+                },
+                abrirCrear() {
+                    this.editando = false;
+                    // id: 0 (no null) porque Categoria.Id es un int no-nullable en C#;
+                    // Agregar() lo ignora igual, la base lo autogenera
+                    this.form = { id: 0, nombre: '', descripcion: '' };
+                    this.erroresForm = {};
+                    this.modal.show();
+                },
+                abrirEditar(categoria) {
+                    this.editando = true;
+                    this.form = { id: categoria.id, nombre: categoria.nombre, descripcion: categoria.descripcion };
+                    this.erroresForm = {};
+                    this.modal.show();
+                },
+                async guardar() {
+                    this.erroresForm = {};
+                    if (!this.form.nombre || this.form.nombre.trim() === '') {
+                        this.erroresForm.nombre = 'El nombre es requerido.';
+                        return;
+                    }
+
+                    this.guardando = true;
+                    try {
+                        const url = this.editando ? `/Categoria/Actualizar/${this.form.id}` : '/Categoria/Crear';
+                        const method = this.editando ? 'PUT' : 'POST';
+
+                        const resp = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': this.csrfToken()
+                            },
+                            body: JSON.stringify(this.form)
+                        });
+
+                        if (!resp.ok) {
+                            throw new Error('Error al guardar la categoría.');
+                        }
+
+                        this.modal.hide();
+                        this.mensajeExito = this.editando ? 'Categoría actualizada.' : 'Categoría creada.';
+                        await this.cargarCategorias();
+                    } catch (e) {
+                        this.mensajeError = e.message;
+                    } finally {
+                        this.guardando = false;
+                    }
+                },
+                async eliminar(categoria) {
+                    if (!confirm(`¿Eliminar la categoría "${categoria.nombre}"?`)) return;
+
+                    try {
+                        const resp = await fetch(`/Categoria/Eliminar/${categoria.id}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': this.csrfToken() }
+                        });
+
+                        if (resp.status === 409) {
+                            const data = await resp.json();
+                            this.mensajeError = data.message;
+                            return;
+                        }
+                        if (!resp.ok) {
+                            throw new Error('Error al eliminar la categoría.');
+                        }
+
+                        this.mensajeExito = 'Categoría eliminada.';
+                        await this.cargarCategorias();
+                    } catch (e) {
+                        this.mensajeError = e.message;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+}

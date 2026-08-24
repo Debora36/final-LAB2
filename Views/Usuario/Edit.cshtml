@@ -1,0 +1,89 @@
+@model final_LAB2.Models.Usuario
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Editar Usuario
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username" class="form-control" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Rol" class="form-label"></label>
+                            <select asp-for="Rol" class="form-select">
+                                <option value="Admin">Admin</option>
+                                <option value="Tecnico">Técnico</option>
+                                <option value="Empleado">Empleado</option>
+                            </select>
+                            <span asp-validation-for="Rol" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+                        <h6 class="text-muted mb-3">Cambiar contraseña (opcional)</h6>
+
+                        <div class="mb-3">
+                            <label for="nuevaPassword" class="form-label">Nueva contraseña</label>
+                            <input type="password" id="nuevaPassword" name="nuevaPassword" class="form-control"
+                                   placeholder="Dejar vacío para no cambiarla" minlength="6" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmarPassword" class="form-label">Confirmar nueva contraseña</label>
+                            <input type="password" id="confirmarPassword" name="confirmarPassword" class="form-control" minlength="6" />
+                            <span class="text-danger" id="passwordError"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const nuevaPassword = document.getElementById('nuevaPassword').value;
+            const confirmarPassword = document.getElementById('confirmarPassword').value;
+            const errorSpan = document.getElementById('passwordError');
+
+            if (nuevaPassword && nuevaPassword !== confirmarPassword) {
+                e.preventDefault();
+                errorSpan.textContent = 'Las contraseñas no coinciden.';
+            } else {
+                errorSpan.textContent = '';
+            }
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

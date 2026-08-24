@@ -1,0 +1,140 @@
+@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.Empleado>
+@{
+    ViewData["Title"] = "Gestión de Empleados";
+}
+
+<div class="container-fluid">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="card-title mb-0 fw-bold text-primary">
+                        <i class="fas fa-id-badge me-2"></i>Lista de Empleados
+                    </h3>
+                    <a class="btn btn-primary" asp-action="Create">
+                        <i class="fas fa-plus me-1"></i>Crear Empleado
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.TotalCount > 0)
+                    {
+                        <p class="text-muted mb-3">
+                            Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
+                            <strong>@Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount)</strong> de
+                            <strong>@Model.TotalCount</strong> empleados
+                        </p>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>DNI</th>
+                                    <th>Teléfono</th>
+                                    <th>Usuario vinculado</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items.Any())
+                                {
+                                    @foreach (var empleado in Model.Items)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-info">@empleado.Id</span></td>
+                                            <td><strong>@empleado.Nombre @empleado.Apellido</strong></td>
+                                            <td>@empleado.DNI</td>
+                                            <td>@(empleado.Telefono ?? "-")</td>
+                                            <td>
+                                                @if (empleado.UsuarioId.HasValue)
+                                                {
+                                                    <span class="badge bg-primary">Sí</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Sin cuenta</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (empleado.Activo)
+                                                {
+                                                    <span class="badge bg-success">Activo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactivo</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <a class="btn btn-sm btn-outline-warning" asp-action="Edit" asp-route-id="@empleado.Id" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                @if (empleado.Activo)
+                                                {
+                                                    <form asp-action="Disable" asp-route-id="@empleado.Id" method="post" class="d-inline"
+                                                          onsubmit="return confirm('¿Deshabilitar este empleado?');">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Deshabilitar">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <span class="btn btn-sm btn-outline-secondary disabled" title="Ya está deshabilitado">
+                                                        <i class="fas fa-user-slash"></i>
+                                                    </span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">No hay empleados registrados</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex - 1)">
+                                        <i class="fas fa-angle-left"></i> Anterior
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                        <a class="page-link" asp-action="Index" asp-route-pageIndex="@i">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex + 1)">
+                                        Siguiente <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

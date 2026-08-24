@@ -1,0 +1,117 @@
+﻿@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - final_LAB2</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/final_LAB2.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+          integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark modern-navbar shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-building me-2"></i>
+                    <span class="fw-bold">ILend</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Usuario" asp-action="Index">
+                                <i class="fas fa-user-shield me-1"></i> Usuarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Empleado" asp-action="Index">
+                                <i class="fas fa-user-tie me-1"></i> Empleados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Categoria" asp-action="Index">
+                                <i class="fas fa-tags me-1"></i> Categorias
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav ms-auto">
+                        <!-- Usuario dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center user-dropdown" href="#"
+                               id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img id="navbarAvatar"
+                                     src="@(string.IsNullOrWhiteSpace(User.FindFirst("AvatarUrl")?.Value) ? "/img/avatar-default.svg" : User.FindFirst("AvatarUrl")!.Value)"
+                                     alt="Avatar" class="rounded-circle me-2"
+                                     style="width: 32px; height: 32px; object-fit: cover; border: 2px solid #fff;" />
+                                <span class="d-none d-lg-inline">@User.Identity?.Name</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end modern-dropdown" aria-labelledby="userDropdown">
+                                <li>
+                                    <div class="dropdown-item-text">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="@(string.IsNullOrWhiteSpace(User.FindFirst("AvatarUrl")?.Value) ? "/img/avatar-default.svg" : User.FindFirst("AvatarUrl")!.Value)"
+                                                 alt="Avatar" class="rounded-circle me-2"
+                                                 style="width: 40px; height: 40px; object-fit: cover;" />
+                                            <div>
+                                                <div class="fw-bold">@User.Identity?.Name</div>
+                                                <small
+                                                class="text-muted">@User.FindFirst(ClaimTypes.Email)?.Value</small>
+                                                <small
+                                                class="text-muted d-block">@User.FindFirst(ClaimTypes.Role)?.Value</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" asp-area="" asp-controller="Auth"
+                                       asp-action="Logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - final_LAB2 - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+@model final_LAB2.Models.Empleado
+@{
+    ViewData["Title"] = "Crear Empleado";
+    var usuariosElegibles = ViewBag.UsuariosElegibles as List<final_LAB2.Models.Usuario> ?? new();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-id-badge me-2"></i>Crear Empleado
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Create" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Nombre" class="form-label"></label>
+                                    <input asp-for="Nombre" class="form-control" />
+                                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Apellido" class="form-label"></label>
+                                    <input asp-for="Apellido" class="form-control" />
+                                    <span asp-validation-for="Apellido" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="DNI" class="form-label"></label>
+                                    <input asp-for="DNI" class="form-control" />
+                                    <span asp-validation-for="DNI" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Telefono" class="form-label"></label>
+                                    <input asp-for="Telefono" class="form-control" />
+                                    <span asp-validation-for="Telefono" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UsuarioId" class="form-label">Cuenta de usuario vinculada (opcional)</label>
+                            <select asp-for="UsuarioId" class="form-select">
+                                <option value="">Sin cuenta de usuario</option>
+                                @foreach (var usuario in usuariosElegibles)
+                                {
+                                    <option value="@usuario.Id">@usuario.Username (@usuario.Email)</option>
+                                }
+                            </select>
+                            <small class="text-muted">Solo se listan cuentas con rol "Empleado" que todavía no están vinculadas a otro empleado.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Crear Empleado
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

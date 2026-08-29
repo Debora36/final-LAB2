@@ -1,0 +1,46 @@
+@model List<final_LAB2.Models.Categoria>
+@{
+    int pagina = ViewBag.Pagina ?? 1;
+    int totalPaginas = ViewBag.TotalPaginas ?? 1;
+}
+
+<div class="list-group mb-3">
+    @if (Model.Any())
+    {
+        @foreach (var categoria in Model)
+        {
+            <button type="button" class="list-group-item list-group-item-action seleccionar-categoria"
+                    data-id="@categoria.Id" data-nombre="@categoria.Nombre">
+                <strong>@categoria.Nombre</strong>
+                @if (!string.IsNullOrWhiteSpace(categoria.Descripcion))
+                {
+                    <br /><small class="text-muted">@categoria.Descripcion</small>
+                }
+            </button>
+        }
+    }
+    else
+    {
+        <div class="text-muted p-2">No hay categorías registradas.</div>
+    }
+</div>
+
+@if (totalPaginas > 1)
+{
+    <nav aria-label="Navegación de páginas">
+        <ul class="pagination pagination-sm justify-content-center">
+            <li class="page-item @(pagina <= 1 ? "disabled" : "")">
+                <a href="#" class="page-link cargar-pagina" data-pagina="@(pagina - 1)">Anterior</a>
+            </li>
+            @for (int i = 1; i <= totalPaginas; i++)
+            {
+                <li class="page-item @(i == pagina ? "active" : "")">
+                    <a href="#" class="page-link cargar-pagina" data-pagina="@i">@i</a>
+                </li>
+            }
+            <li class="page-item @(pagina >= totalPaginas ? "disabled" : "")">
+                <a href="#" class="page-link cargar-pagina" data-pagina="@(pagina + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}

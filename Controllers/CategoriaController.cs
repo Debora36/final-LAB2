@@ -28,6 +28,30 @@ namespace final_LAB2.Controllers
             return Json(categorias);
         }
 
+        // Búsqueda ajax reutilizada por el filtro de Equipo y por el selector de categoría en su ABM
+        [HttpGet]
+        [Authorize] // solo pisa el "Roles=Admin" de la clase; sigue exigiendo login, para cualquier rol
+        public IActionResult Buscar(string termino = "", int max = 10)
+        {
+            var categorias = _categoriaService.Buscar(termino, max);
+            return Json(categorias);
+        }
+
+        // Lista paginada para el modal de selección (filtro de Equipo, selector al crear un Equipo, etc.)
+        [HttpGet]
+        [Authorize]
+        public IActionResult ListarParaSeleccion(int pagina = 1)
+        {
+            const int tamPagina = 5;
+            var (items, totalRegistros) = _categoriaService.ObtenerPaginado(pagina, tamPagina);
+            var totalPaginas = (int)Math.Ceiling((double)totalRegistros / tamPagina);
+
+            ViewBag.Pagina = pagina;
+            ViewBag.TotalPaginas = totalPaginas;
+
+            return PartialView("_ListaCategoriasSeleccion", items);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Crear([FromBody] Categoria categoria)

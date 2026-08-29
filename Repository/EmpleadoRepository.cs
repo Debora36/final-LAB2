@@ -170,5 +170,6 @@ namespace final_LAB2.Repository
                 Activo = reader.GetBoolean("Activo")
             };
         }
+   
     }
 }

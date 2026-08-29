@@ -1,0 +1,106 @@
+@model final_LAB2.Models.Equipo
+@{
+    ViewData["Title"] = "Editar Equipo";
+    var categoriasElegibles = ViewBag.Categorias as List<final_LAB2.Models.Categoria> ?? new();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-laptop me-2"></i>Editar Equipo
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Modelo" class="form-label"></label>
+                                    <input asp-for="Modelo" class="form-control" />
+                                    <span asp-validation-for="Modelo" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="NumeroSerie" class="form-label"></label>
+                                    <input asp-for="NumeroSerie" class="form-control" />
+                                    <span asp-validation-for="NumeroSerie" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CategoriaId" class="form-label">Categoría</label>
+                                    <select asp-for="CategoriaId" class="form-select">
+                                        @foreach (var categoria in categoriasElegibles)
+                                        {
+                                            <option value="@categoria.Id">@categoria.Nombre</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Estado" class="form-label"></label>
+                                    <select asp-for="Estado" class="form-select">
+                                        <option value="Disponible">Disponible</option>
+                                        <option value="Prestado">Prestado</option>
+                                        <option value="En Mantenimiento">En Mantenimiento</option>
+                                    </select>
+                                    <small class="text-muted">Para dar de baja el equipo, usá el botón "Dar de baja" del listado.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Factura o garantía</label>
+                            @if (!string.IsNullOrWhiteSpace(Model.RutaArchivoGarantia))
+                            {
+                                <div class="mb-2">
+                                    <a href="@Model.RutaArchivoGarantia" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-paperclip me-1"></i>Ver archivo actual
+                                    </a>
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="eliminarArchivoActual" value="true" class="form-check-input" id="eliminarArchivoActual" />
+                                        <label class="form-check-label text-danger" for="eliminarArchivoActual">
+                                            Eliminar archivo actual
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No hay archivo cargado.</p>
+                            }
+                            <input type="file" name="archivoGarantia" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+                            <small class="text-muted">Subí un archivo nuevo para reemplazar el actual (dejalo vacío para no cambiarlo).</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

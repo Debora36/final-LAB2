@@ -117,3 +117,4 @@ D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\BCrypt-Net-Next.dll
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\j7krcmmofu-{0}-3kpijdb9wv-3kpijdb9wv.gz
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\slyymvz0au-{0}-btyppxht62-btyppxht62.gz
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\woejrpe68o-{0}-btyppxht62-btyppxht62.gz
+D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\final-LAB2.sourcelink.json

@@ -15,6 +15,8 @@ namespace final_LAB2.Services
 
         public Empleado? ObtenerPorId(int id) => _empleadoRepository.ObtenerPorId(id);
 
+        public List<Empleado> ObtenerTodos() => _empleadoRepository.ObtenerTodos();
+
         public (List<Empleado> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize)
         {
             var items = _empleadoRepository.ObtenerPaginado(pageIndex, pageSize);
@@ -34,5 +36,6 @@ namespace final_LAB2.Services
         public void Actualizar(Empleado empleado) => _empleadoRepository.Actualizar(empleado);
 
         public void Desactivar(int id) => _empleadoRepository.Desactivar(id);
+        
     }
 }

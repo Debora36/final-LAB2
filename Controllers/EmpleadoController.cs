@@ -108,5 +108,6 @@ namespace final_LAB2.Controllers
             TempData["SuccessMessage"] = "Empleado deshabilitado correctamente.";
             return RedirectToAction(nameof(Index));
         }
+        
     }
 }

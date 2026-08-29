@@ -35,6 +35,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2F0ZWdvcmlhXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/ulp/ProyectosVSC/final-LAB2/Views/Categoria/_ListaCategoriasSeleccion.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2F0ZWdvcmlhXF9MaXN0YUNhdGVnb3JpYXNTZWxlY2Npb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/ulp/ProyectosVSC/final-LAB2/Views/Empleado/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbGVhZG9cQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -45,6 +49,18 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/ulp/ProyectosVSC/final-LAB2/Views/Empleado/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbGVhZG9cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/ulp/ProyectosVSC/final-LAB2/Views/Equipo/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXF1aXBvXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/ulp/ProyectosVSC/final-LAB2/Views/Equipo/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXF1aXBvXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/ulp/ProyectosVSC/final-LAB2/Views/Equipo/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXF1aXBvXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/ulp/ProyectosVSC/final-LAB2/Views/Home/Index.cshtml]
@@ -65,6 +81,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/ulp/ProyectosVSC/final-LAB2/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/ulp/ProyectosVSC/final-LAB2/Views/Solicitud/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU29saWNpdHVkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/ulp/ProyectosVSC/final-LAB2/Views/Usuario/Create.cshtml]

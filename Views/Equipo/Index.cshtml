@@ -1,0 +1,212 @@
+@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.Equipo>
+@{
+    ViewData["Title"] = "Gestión de Equipos";
+    string? estadoActual = ViewBag.EstadoActual;
+    int? categoriaIdActual = ViewBag.CategoriaIdActual;
+    string? categoriaNombreActual = ViewBag.CategoriaNombreActual;
+}
+
+<div class="container-fluid">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="card-title mb-0 fw-bold text-primary">
+                        <i class="fas fa-desktop me-2"></i>Lista de Equipos
+                    </h3>
+                    <a class="btn btn-primary" asp-action="Create">
+                        <i class="fas fa-plus me-1"></i>Crear Equipo
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+                            <div class="btn-group" role="group">
+                                <a asp-action="Index" asp-route-categoriaId="@categoriaIdActual"
+                                   class="btn btn-sm @(estadoActual == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                                <a asp-action="Index" asp-route-estado="Disponible" asp-route-categoriaId="@categoriaIdActual"
+                                   class="btn btn-sm @(estadoActual == "Disponible" ? "btn-success" : "btn-outline-success")">Disponible</a>
+                                <a asp-action="Index" asp-route-estado="Prestado" asp-route-categoriaId="@categoriaIdActual"
+                                   class="btn btn-sm @(estadoActual == "Prestado" ? "btn-warning" : "btn-outline-warning")">Prestado</a>
+                                <a asp-action="Index" asp-route-estado="En Mantenimiento" asp-route-categoriaId="@categoriaIdActual"
+                                   class="btn btn-sm @(estadoActual == "En Mantenimiento" ? "btn-info" : "btn-outline-info")">En Mantenimiento</a>
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
+                                <i class="fas fa-filter me-1"></i>Filtrar por categoría
+                            </button>
+
+                            @if (categoriaIdActual.HasValue)
+                            {
+                                <a asp-action="Index" asp-route-estado="@estadoActual" class="btn btn-sm btn-outline-danger">
+                                    Categoría: @categoriaNombreActual <i class="fas fa-times ms-1"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.TotalCount > 0)
+                    {
+                        <p class="text-muted mb-3">
+                            Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
+                            <strong>@Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount)</strong> de
+                            <strong>@Model.TotalCount</strong> equipos
+                        </p>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Modelo</th>
+                                    <th>N&deg; Serie</th>
+                                    <th>Categoría</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items.Any())
+                                {
+                                    @foreach (var equipo in Model.Items)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-info">@equipo.Id</span></td>
+                                            <td><strong>@equipo.Modelo</strong></td>
+                                            <td>@equipo.NumeroSerie</td>
+                                            <td>@equipo.CategoriaNombre</td>
+                                            <td>
+                                                @{
+                                                    var claseBadge = equipo.Estado switch
+                                                    {
+                                                        "Disponible" => "bg-success",
+                                                        "Prestado" => "bg-warning text-dark",
+                                                        "En Mantenimiento" => "bg-info text-dark",
+                                                        "Baja" => "bg-secondary",
+                                                        _ => "bg-secondary"
+                                                    };
+                                                }
+                                                <span class="badge @claseBadge">@equipo.Estado</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a class="btn btn-sm btn-outline-warning" asp-action="Edit" asp-route-id="@equipo.Id" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                @if (equipo.Estado != "Baja")
+                                                {
+                                                    <form asp-action="DarDeBaja" asp-route-id="@equipo.Id" method="post" class="d-inline"
+                                                          onsubmit="return confirm('¿Dar de baja este equipo?');">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Dar de baja">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">No hay equipos que coincidan con el filtro</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex - 1)"
+                                       asp-route-estado="@estadoActual" asp-route-categoriaId="@categoriaIdActual">
+                                        <i class="fas fa-angle-left"></i> Anterior
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                        <a class="page-link" asp-action="Index" asp-route-pageIndex="@i"
+                                           asp-route-estado="@estadoActual" asp-route-categoriaId="@categoriaIdActual">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex + 1)"
+                                       asp-route-estado="@estadoActual" asp-route-categoriaId="@categoriaIdActual">
+                                        Siguiente <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal selección de Categoria: lista paginada, igual patrón que _ModalSeleccionPropietario -->
+<div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filtrar por categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="contenedorCategorias">
+                    <div class="text-center text-muted py-3">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function cargarCategorias(pagina) {
+            $.get('/Categoria/ListarParaSeleccion?pagina=' + pagina, function (data) {
+                $('#contenedorCategorias').html(data);
+            });
+        }
+
+        // Al abrir el modal, cargamos la primera página
+        $('#modalCategoria').on('shown.bs.modal', function () {
+            cargarCategorias(1);
+        });
+
+        // Delegamos el click en la paginación (el contenido se reemplaza en cada carga)
+        $(document).on('click', '.cargar-pagina', function (e) {
+            e.preventDefault();
+            let pagina = $(this).data('pagina');
+            cargarCategorias(pagina);
+        });
+
+        // Seleccionar categoría filtra el listado de Equipo
+        $(document).on('click', '.seleccionar-categoria', function () {
+            const id = $(this).data('id');
+            $('#modalCategoria').modal('hide');
+            //window.location.href = '/Equipo?categoriaId=' + id;
+            let estado = '@(estadoActual ?? "")';
+            let url = '/Equipo/Index?categoriaId=' + id;
+            
+            if (estado !== '') {
+                url += '&estado=' + encodeURIComponent(estado);
+            }
+            
+            window.location.href = url;
+        });
+    </script>
+}

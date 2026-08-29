@@ -1,7 +1,7 @@
 using final_LAB2.Models;
 using final_LAB2.Repository.Interfaces;
 using Microsoft.Extensions.Configuration;
-using MySqlConnector; // NuGet: MySqlConnector (o MySql.Data si preferís el oficial)
+using MySqlConnector;
 
 namespace final_LAB2.Repository
 {

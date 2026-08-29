@@ -12,11 +12,13 @@ namespace final_LAB2.Models
         [StringLength(100, ErrorMessage = "El número de serie no puede exceder los 100 caracteres")]
         public required string NumeroSerie { get; set; }
         [Required(ErrorMessage = "El estado es requerido")]
-        public required string Estado { get; set; }
+        public string Estado { get; set; } = "Disponible";
         public string? RutaArchivoGarantia { get; set; }
         [Required(ErrorMessage = "La categoría es requerida")]
         public required int CategoriaId { get; set; }
 
+        // Solo para mostrar en listados (viene del JOIN con CATEGORIA); no se persiste desde acá
+        public string? CategoriaNombre { get; set; }
         public override string ToString()
         {
             var equipo =  $"Categoria: {CategoriaId}, Modelo: {Modelo}, Número de Serie: {NumeroSerie}, Estado: {Estado}";

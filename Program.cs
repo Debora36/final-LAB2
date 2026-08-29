@@ -23,6 +23,12 @@ builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 
+builder.Services.AddScoped<IEquipoRepository, EquipoRepository>();
+builder.Services.AddScoped<IEquipoService, EquipoService>();
+
+builder.Services.AddScoped<ISolicitudRepository, SolicitudRepository>();
+builder.Services.AddScoped<ISolicitudService, SolicitudService>();
+
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -21,6 +21,16 @@ namespace final_LAB2.Services
 
         public void Actualizar(Categoria categoria) => _categoriaRepository.Actualizar(categoria);
 
+        public List<Categoria> Buscar(string termino, int maxResultados = 10)
+            => _categoriaRepository.Buscar(termino, maxResultados);
+
+        public (List<Categoria> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize)
+        {
+            var items = _categoriaRepository.ObtenerPaginado(pageIndex, pageSize);
+            var total = _categoriaRepository.ContarTotal();
+            return (items, total);
+        }
+
         public void Eliminar(int id)
         {
             if (_categoriaRepository.EstaEnUso(id))

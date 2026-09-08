@@ -118,3 +118,12 @@ D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\j7krcmmofu-{0}-3kpij
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\slyymvz0au-{0}-btyppxht62-btyppxht62.gz
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\compressed\woejrpe68o-{0}-btyppxht62-btyppxht62.gz
 D:\ulp\ProyectosVSC\final-LAB2\obj\Debug\net10.0\final-LAB2.sourcelink.json
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.Bcl.Cryptography.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
+D:\ulp\ProyectosVSC\final-LAB2\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll

@@ -1,4 +1,4 @@
-@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.Solicitud>
+@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.ViewModels.SolicitudViewModel>
 @{
     ViewData["Title"] = "Gestión de Solicitudes";
     string? estadoActual = ViewBag.EstadoActual;
@@ -29,9 +29,14 @@
                     <h3 class="card-title mb-0 fw-bold text-primary">
                         <i class="fas fa-file-alt me-2"></i>Lista de Solicitudes
                     </h3>
-                    <a class="btn btn-primary" asp-action="Crear">
-                        <i class="fas fa-plus me-1"></i>Nueva Solicitud
-                    </a>
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        @if (User.IsInRole("Empleado"))
+                        {
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearSolicitud">
+                                <i class="fas fa-plus me-1"></i>Nueva Solicitud
+                            </button>
+                        }
+                    </div>
                 </div>
                 <div class="card-body">
 
@@ -87,19 +92,19 @@
                             <tbody>
                                 @if (Model.Items.Any())
                                 {
-                                    @foreach (var solicitud in Model.Items)
+                                    @foreach (var item in Model.Items)
                                     {
                                         <tr>
-                                            <td><span class="badge bg-info">@solicitud.Id</span></td>
-                                            <td><strong>@solicitud.EmpleadoId</strong></td>
-                                            <td>@solicitud.CategoriaId</td>
+                                            <td><span class="badge bg-info">@item.Solicitud.Id</span></td>
+                                            <td><strong>@item.Empleado.Nombre @item.Empleado.Apellido</strong></td>
+                                            <td>@item.Categoria.Nombre</td>
                                             <td>
-                                                @if (!string.IsNullOrEmpty(solicitud.Motivo))
+                                                @if (!string.IsNullOrEmpty(item.Solicitud.Motivo))
                                                 {
-                                                    <span title="@solicitud.Motivo">
-                                                        @(solicitud.Motivo.Length > 40
-                                                            ? solicitud.Motivo.Substring(0, 40) + "…"
-                                                            : solicitud.Motivo)
+                                                    <span title="@item.Solicitud.Motivo">
+                                                        @(item.Solicitud.Motivo.Length > 40
+                                                            ? item.Solicitud.Motivo.Substring(0, 40) + "…"
+                                                            : item.Solicitud.Motivo)
                                                     </span>
                                                 }
                                                 else
@@ -107,11 +112,11 @@
                                                     <span class="text-muted fst-italic">Sin motivo</span>
                                                 }
                                             </td>
-                                            <td>@solicitud.TiempoNecesario</td>
-                                            <td>@solicitud.FechaSolicitud.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.Solicitud.TiempoNecesario</td>
+                                            <td>@item.Solicitud.FechaSolicitud.ToString("dd/MM/yyyy")</td>
                                             <td>
                                                 @{
-                                                    var claseBadge = solicitud.Estado switch
+                                                    var claseBadge = item.Solicitud.Estado switch
                                                     {
                                                         "Pendiente"  => "bg-warning text-dark",
                                                         "Aprobada"   => "bg-success",
@@ -119,40 +124,40 @@
                                                         _            => "bg-secondary"
                                                     };
                                                 }
-                                                <span class="badge @claseBadge">@solicitud.Estado</span>
+                                                <span class="badge @claseBadge">@item.Solicitud.Estado</span>
                                             </td>
                                             <td class="text-center">
-                                                <!-- Ver detalle -->
-                                                <a class="btn btn-sm btn-outline-info"
-                                                   asp-action="Detalle" asp-route-id="@solicitud.Id"
-                                                   title="Ver detalle">
-                                                    <i class="fas fa-eye"></i>
+
+                                            @if (User.IsInRole("Empleado") && item.Solicitud.Estado == "Pendiente")
+                                            {
+                                                <a class="btn btn-sm btn-outline-warning"
+                                                asp-action="Editar" asp-route-id="@item.Solicitud.Id">
+                                                    <i class="fas fa-edit"></i>
                                                 </a>
+                                                <form asp-action="Eliminar" asp-route-id="@item.Solicitud.Id"
+                                                    method="post" class="d-inline"
+                                                    onsubmit="return confirm('¿Eliminar esta solicitud?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            }
 
-                                                <!-- Editar solo si está Pendiente -->
-                                                @if (solicitud.Estado == "Pendiente")
+                                            @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
+                                            {
+                                                @if (item.Solicitud.Estado == "Pendiente")
                                                 {
-                                                    <a class="btn btn-sm btn-outline-warning"
-                                                       asp-action="Editar" asp-route-id="@solicitud.Id"
-                                                       title="Editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalAprobar-@item.Solicitud.Id"
+                                                            title="Aprobar">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
 
-                                                    <!-- Aprobar -->
-                                                    <form asp-action="CambiarEstado" asp-route-id="@solicitud.Id"
-                                                          method="post" class="d-inline"
-                                                          onsubmit="return confirm('¿Aprobar esta solicitud?');">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="nuevoEstado" value="Aprobada" />
-                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Aprobar">
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
-                                                    </form>
-
-                                                    <!-- Rechazar -->
-                                                    <form asp-action="CambiarEstado" asp-route-id="@solicitud.Id"
-                                                          method="post" class="d-inline"
-                                                          onsubmit="return confirm('¿Rechazar esta solicitud?');">
+                                                    <form asp-action="CambiarEstado" asp-route-id="@item.Solicitud.Id"
+                                                        method="post" class="d-inline"
+                                                        onsubmit="return confirm('¿Rechazar esta solicitud?');">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="nuevoEstado" value="Rechazada" />
                                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Rechazar">
@@ -160,7 +165,8 @@
                                                         </button>
                                                     </form>
                                                 }
-                                            </td>
+                                            }
+                                        </td>
                                         </tr>
                                     }
                                 }
@@ -212,3 +218,135 @@
         </div>
     </div>
 </div>
+
+@if (User.IsInRole("Empleado"))
+{
+    var categoriasElegibles = ViewBag.Categorias as List<final_LAB2.Models.Categoria> ?? new();
+
+    <div class="modal fade" id="modalCrearSolicitud" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-alt me-2"></i>Nueva Solicitud
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form asp-action="Crear" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        @if (TempData["ErrorModal"] != null)
+                        {
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-1"></i>@TempData["ErrorModal"]
+                            </div>
+                        }
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Categoría del equipo solicitado</label>
+                            <select name="CategoriaId" class="form-select">
+                                <option value="">Seleccione una categoría</option>
+                                @foreach (var categoria in categoriasElegibles)
+                                {
+                                    <option value="@categoria.Id">@categoria.Nombre</option>
+                                }
+                            </select>
+                            <span class="text-danger" id="error-categoria"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Tiempo necesario</label>
+                            <input type="text" name="TiempoNecesario" class="form-control"
+                                   placeholder="Ej: 3 días, 1 semana..." />
+                            <span class="text-danger" id="error-tiempo"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Motivo <span class="text-muted fw-normal">(opcional)</span>
+                            </label>
+                            <textarea name="Motivo" class="form-control" rows="3"
+                                      placeholder="Describa brevemente el motivo..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Enviar Solicitud
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+}
+<!-- Modal Aprobar — uno por solicitud -->
+@foreach (var item in Model.Items)
+{
+    @if (item.Solicitud.Estado == "Pendiente" && (User.IsInRole("Admin") || User.IsInRole("Tecnico")))
+    {
+        <div class="modal fade" id="modalAprobar-@item.Solicitud.Id" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-check me-2"></i>Aprobar Solicitud #@item.Solicitud.Id
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form asp-controller="Prestamo" asp-action="Aprobar" asp-route-id="@item.Solicitud.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="modal-body">
+                            <p class="text-muted mb-3">
+                                Empleado: <strong>@item.Empleado.Nombre @item.Empleado.Apellido</strong><br/>
+                                Categoría: <strong>@item.Categoria.Nombre</strong><br/>
+                                Tiempo solicitado: <strong>@item.Solicitud.TiempoNecesario</strong>
+                            </p>
+
+                            <div class="mb-3">
+                                <label class="form-label">Equipo a prestar</label>
+                                <select name="equipoId" class="form-select" required>
+                                    <option value="">Seleccione un equipo disponible</option>
+                                    @foreach (var equipo in ViewBag.EquiposDisponibles as List<final_LAB2.Models.Equipo> ?? new())
+                                    {
+                                        <option value="@equipo.Id">@equipo.Modelo — @equipo.NumeroSerie</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de devolución estimada</label>
+                                <input type="date" name="fechaDevolucionEstimada" class="form-control"
+                                       min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Aprobar y crear préstamo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    @if (TempData["AbrirModal"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                new bootstrap.Modal(document.getElementById('modalCrearSolicitud')).show();
+            });
+        </script>
+    }
+}

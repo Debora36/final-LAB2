@@ -11,10 +11,12 @@ namespace final_LAB2.Controllers
     public class AuthController : Controller
     {
         private readonly IUsuarioService _usuarioService;
+        private readonly IEmpleadoService _empleadoService;
  
-        public AuthController(IUsuarioService usuarioService)
+        public AuthController(IUsuarioService usuarioService, IEmpleadoService empleadoService)
         {
             _usuarioService = usuarioService;
+            _empleadoService = empleadoService;
         }
  
         [AllowAnonymous]
@@ -56,6 +58,11 @@ namespace final_LAB2.Controllers
             if (!string.IsNullOrWhiteSpace(usuario.AvatarUrl))
             {
                 claims.Add(new Claim("AvatarUrl", usuario.AvatarUrl));
+            }
+            var empleado = _empleadoService.ObtenerPorUsuarioId(usuario.Id);
+            if (empleado != null)
+            {
+                claims.Add(new Claim("EmpleadoId", empleado.Id.ToString()));
             }
  
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

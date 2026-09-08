@@ -1,110 +1,184 @@
 using final_LAB2.Models;
+using final_LAB2.Models.ViewModels;
 using final_LAB2.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Security.Claims;
 
 namespace final_LAB2.Controllers
 {
+    [Authorize(Roles = "Admin,Tecnico,Empleado")]// Admin/Tecnico ven todo — Empleado ve solo las suyas
     public class SolicitudController : Controller
     {
+        private const int PageSize = 10;
         private readonly ISolicitudService _solicitudService;
+        private readonly ICategoriaService _categoriaService;
+        private readonly IEmpleadoService _empleadoService;
+        private readonly IEquipoService _equipoService;
 
-        public SolicitudController(ISolicitudService solicitudService)
+        public SolicitudController(ISolicitudService solicitudService, ICategoriaService categoriaService, IEmpleadoService empleadoService, IEquipoService equipoService)
         {
             _solicitudService = solicitudService;
+            _categoriaService = categoriaService;
+            _empleadoService = empleadoService;
+            _equipoService = equipoService;
         }
 
-        // GET: /Solicitud
-        public IActionResult Index(int pageIndex = 1, int pageSize = 10, string? estado = null)
+        public IActionResult Index(int pageIndex = 1, string? estado = null)
+    {
+        if (pageIndex < 1) pageIndex = 1;
+
+        List<Solicitud> items;
+        int totalCount;
+        if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
         {
-            var (items, totalCount) = _solicitudService.ObtenerPaginado(pageIndex, pageSize);
-
-            ViewBag.PageIndex = pageIndex;
-            ViewBag.PageSize = pageSize;
-            ViewBag.TotalCount = totalCount;
-            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-            ViewBag.EstadoActual = estado;
-            return View(items);
+            ViewBag.EquiposDisponibles = _equipoService.ObtenerPorEstado("Disponible");
+        }
+        if (User.IsInRole("Empleado"))
+        {
+            var empleadoIdStr = User.FindFirstValue("EmpleadoId");
+            if (string.IsNullOrEmpty(empleadoIdStr))
+            {
+                TempData["ErrorMessage"] = "No se encontró el empleado asociado a su sesión. Vuelva a iniciar sesión.";
+                return RedirectToAction("Index", "Home");
+            }
+            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
+            (items, totalCount) = _solicitudService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId, estado);
+            ViewBag.Categorias = _categoriaService.ObtenerTodos();
+        }
+        else
+        {
+            (items, totalCount) = _solicitudService.ObtenerPaginado(pageIndex, PageSize, estado);
         }
 
-        // GET: /Solicitud/Detalle/5
+        var listaViewModel = new List<SolicitudViewModel>();
+        foreach (var solicitud in items)
+        {
+            listaViewModel.Add(new SolicitudViewModel
+            {
+                Solicitud = solicitud,
+                Empleado = _empleadoService.ObtenerPorId(solicitud.EmpleadoId)!,
+                Categoria = _categoriaService.ObtenerPorId(solicitud.CategoriaId)!
+            });
+        }
+        var modelo = new PaginatedListViewModel<SolicitudViewModel>
+        {
+            Items = listaViewModel,
+            PageIndex = pageIndex,
+            PageSize = PageSize,
+            TotalCount = totalCount
+        };
+
+        ViewBag.EstadoActual = estado;
+        return View(modelo);
+    }
+
+        [HttpGet]
         public IActionResult Detalle(int id)
         {
             var solicitud = _solicitudService.ObtenerPorId(id);
             if (solicitud == null)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Solicitud no encontrada.";
+                return RedirectToAction(nameof(Index));
+            }
 
             return View(solicitud);
         }
 
-        // GET: /Solicitud/Crear
+        [Authorize(Roles = "Empleado")]
+        [HttpGet]
         public IActionResult Crear()
         {
+            //ViewBag.Categorias = _categoriaService.ObtenerTodos();
             return View();
         }
 
-        // POST: /Solicitud/Crear
+       [Authorize(Roles = "Empleado")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Crear(Solicitud solicitud)
         {
+            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
+            solicitud.EmpleadoId = empleadoId;
+            ModelState.Remove(nameof(solicitud.EmpleadoId));
+
             if (!ModelState.IsValid)
-                return View(solicitud);
+            {
+                // Volvemos al Index con el modal abierto
+                TempData["AbrirModal"] = true;
+                // Los errores viajan por TempData para mostrarlos en el modal
+                TempData["ErrorModal"] = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault();
+
+                return RedirectToAction(nameof(Index));
+            }
 
             try
             {
                 _solicitudService.Crear(solicitud);
-                TempData["Exito"] = "Solicitud creada correctamente.";
-                return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = "Solicitud enviada correctamente.";
             }
             catch (ArgumentException ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(solicitud);
+                TempData["AbrirModal"] = true;
+                TempData["ErrorModal"] = ex.Message;
             }
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Solicitud/Editar/5
+        [Authorize(Roles = "Empleado")]
+        [HttpGet]
         public IActionResult Editar(int id)
         {
             var solicitud = _solicitudService.ObtenerPorId(id);
             if (solicitud == null)
-                return NotFound();
-
-            if (solicitud.Estado != "Pendiente")
             {
-                TempData["Error"] = "Solo se pueden editar solicitudes en estado Pendiente.";
+                TempData["ErrorMessage"] = "Solicitud no encontrada.";
                 return RedirectToAction(nameof(Index));
             }
 
+            if (solicitud.Estado != "Pendiente")
+            {
+                TempData["ErrorMessage"] = "Solo se pueden editar solicitudes en estado Pendiente.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Categorias = _categoriaService.ObtenerTodos();
             return View(solicitud);
         }
 
-        // POST: /Solicitud/Editar/5
+        [Authorize(Roles = "Empleado")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Editar(int id, Solicitud solicitud)
         {
             if (id != solicitud.Id)
-                return BadRequest();
+                return NotFound();
 
             if (!ModelState.IsValid)
+            {
+                ViewBag.Categorias = _categoriaService.ObtenerTodos();
                 return View(solicitud);
+            }
 
             try
             {
                 _solicitudService.Actualizar(solicitud);
-                TempData["Exito"] = "Solicitud actualizada correctamente.";
+                TempData["SuccessMessage"] = "Solicitud actualizada correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (InvalidOperationException ex)
             {
-                TempData["Error"] = ex.Message;
+                TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction(nameof(Index));
             }
         }
 
-        // POST: /Solicitud/CambiarEstado/5
+        [Authorize(Roles = "Admin,Tecnico")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult CambiarEstado(int id, string nuevoEstado)
@@ -112,22 +186,88 @@ namespace final_LAB2.Controllers
             var estadosValidos = new[] { "Pendiente", "Aprobada", "Rechazada" };
             if (!estadosValidos.Contains(nuevoEstado))
             {
-                TempData["Error"] = "Estado no válido.";
+                TempData["ErrorMessage"] = "Estado no válido.";
                 return RedirectToAction(nameof(Index));
             }
 
             try
             {
                 _solicitudService.CambiarEstado(id, nuevoEstado);
-                TempData["Exito"] = $"Estado cambiado a '{nuevoEstado}' correctamente.";
+                TempData["SuccessMessage"] = $"Estado cambiado a '{nuevoEstado}' correctamente.";
             }
             catch (InvalidOperationException ex)
             {
-                TempData["Error"] = ex.Message;
+                TempData["ErrorMessage"] = ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
         }
-        
+
+        [Authorize(Roles = "Empleado")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Eliminar(int id)
+        {
+            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
+            var solicitud = _solicitudService.ObtenerPorId(id);
+
+            if (solicitud == null)
+            {
+                TempData["ErrorMessage"] = "Solicitud no encontrada.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Verificamos que la solicitud pertenezca al empleado logueado
+            if (solicitud.EmpleadoId != empleadoId)
+            {
+                TempData["ErrorMessage"] = "No tenés permiso para eliminar esta solicitud.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (solicitud.Estado != "Pendiente")
+            {
+                TempData["ErrorMessage"] = "Solo se pueden eliminar solicitudes en estado Pendiente.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _solicitudService.Eliminar(id);
+            TempData["SuccessMessage"] = "Solicitud eliminada correctamente.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Roles = "Admin,Tecnico")]
+        public IActionResult PorEmpleado(int empleadoId, int pageIndex = 1, string? estado = null)
+        {
+            if (pageIndex < 1) pageIndex = 1;
+
+            var (solicitudes, totalCount) = _solicitudService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId, estado);
+
+            var listaViewModel = new List<SolicitudViewModel>();
+            foreach (var solicitud in solicitudes)
+            {
+                listaViewModel.Add(new SolicitudViewModel
+                {
+                    Solicitud = solicitud,
+                    Empleado = _empleadoService.ObtenerPorId(solicitud.EmpleadoId)!,
+                    Categoria = _categoriaService.ObtenerPorId(solicitud.CategoriaId)!
+                });
+            }
+
+            var modelo = new PaginatedListViewModel<SolicitudViewModel>
+            {
+                Items = listaViewModel,
+                PageIndex = pageIndex,
+                PageSize = PageSize,
+                TotalCount = totalCount
+            };
+
+            // Para mostrar el nombre del empleado en el título de la vista
+            var empleado = _empleadoService.ObtenerPorId(empleadoId);
+            ViewBag.EmpleadoNombre = empleado != null ? $"{empleado.Nombre} {empleado.Apellido}" : "Empleado";
+            ViewBag.EmpleadoId = empleadoId;
+            ViewBag.EstadoActual = estado;
+
+            return View(modelo);
+        }
     }
 }

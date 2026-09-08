@@ -41,5 +41,9 @@ namespace final_LAB2.Services
         }
 
         public void DarDeBaja(int id) => _equipoRepository.DarDeBaja(id);
+        public List<Equipo> ObtenerPorEstado(string estado)
+        {
+            return _equipoRepository.ObtenerPorEstado(estado);
+        }
     }
 }

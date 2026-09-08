@@ -25,6 +25,20 @@ namespace final_LAB2.Repository
             return reader.Read() ? MapearEmpleado(reader) : null;
         }
 
+        public Empleado? ObtenerPorUsuarioId(int usuarioId)
+        {
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            const string query = @"SELECT Id, Nombre, Apellido, DNI, Telefono, UsuarioId, Activo
+                                    FROM EMPLEADO WHERE UsuarioId = @UsuarioId";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@UsuarioId", usuarioId);
+
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? MapearEmpleado(reader) : null;
+        }
+
         public List<Empleado> ObtenerTodos()
         {
             var empleados = new List<Empleado>();

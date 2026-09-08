@@ -1,8 +1,265 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@Html.AntiForgeryToken()
+@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.ViewModels.PrestamoViewModel>
+@{
+    ViewData["Title"] = "Inicio";
+    string? dniActual = ViewBag.DNIActual;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-times-circle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="card-title mb-0 fw-bold text-primary">
+                        <i class="fas fa-handshake me-2"></i>
+                        @if (User.IsInRole("Empleado"))
+                        {
+                            <span>Mis Préstamos</span>
+                        }
+                        else
+                        {
+                            <span>Préstamos</span>
+                        }
+                    </h3>
+                </div>
+                <div class="card-body">
+
+                    <!-- Buscador por DNI — solo Admin y Tecnico -->
+                    @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" id="buscadorDni" class="form-control"
+                                           placeholder="Buscar por DNI del empleado..."
+                                           value="@dniActual" />
+                                    <button class="btn btn-outline-secondary" type="button" id="btnLimpiar">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.TotalCount > 0)
+                    {
+                        <p class="text-muted mb-3" id="contadorRegistros">
+                            Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
+                            <strong>@Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount)</strong> de
+                            <strong>@Model.TotalCount</strong> préstamos
+                        </p>
+                    }
+
+                    <div class="table-responsive" id="contenedorTabla">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    @if (!User.IsInRole("Empleado"))
+                                    {
+                                        <th>Empleado</th>
+                                        <th>DNI</th>
+                                    }
+                                    <th>Categoría</th>
+                                    <th>Equipo</th>
+                                    <th>Fecha Préstamo</th>
+                                    <th>Devolución Estimada</th>
+                                    <th>Devolución Real</th>
+                                    @if (!User.IsInRole("Empleado"))
+                                    {
+                                        <th class="text-center">Acciones</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTabla">
+                                @if (Model.Items.Any())
+                                {
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr>
+                                            @if (!User.IsInRole("Empleado"))
+                                            {
+                                                <td><strong>@item.Empleado.Nombre @item.Empleado.Apellido</strong></td>
+                                                <td>@item.Empleado.DNI</td>
+                                            }
+                                            <td>@item.Equipo.CategoriaNombre</td>
+                                            <td>@item.Equipo.Modelo</td>
+                                            <td>@item.Prestamo.FechaPrestamo.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (item.Prestamo.FechaDevolucionEstimada.HasValue)
+                                                {
+                                                    @item.Prestamo.FechaDevolucionEstimada.Value.ToString("dd/MM/yyyy")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted fst-italic">Sin fecha</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.Prestamo.FechaDevolucionReal.HasValue)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        @item.Prestamo.FechaDevolucionReal.Value.ToString("dd/MM/yyyy")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                                }
+                                            </td>
+                                            @if (!User.IsInRole("Empleado"))
+                                            {
+                                                <td class="text-center">
+                                                    @if (!item.Prestamo.FechaDevolucionReal.HasValue)
+                                                    {
+                                                        <form asp-controller="Prestamo" asp-action="RegistrarDevolucion"
+                                                              asp-route-id="@item.Prestamo.Id"
+                                                              method="post" class="d-inline"
+                                                              onsubmit="return confirm('¿Registrar devolución de este equipo?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Registrar devolución">
+                                                                <i class="fas fa-undo me-1"></i>Devolución
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted fst-italic">Devuelto</span>
+                                                    }
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            No hay préstamos para mostrar
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Navegación de páginas" id="paginacion">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-pageIndex="@(Model.PageIndex - 1)"
+                                       asp-route-dni="@dniActual">
+                                        <i class="fas fa-angle-left"></i> Anterior
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                        <a class="page-link" asp-action="Index"
+                                           asp-route-pageIndex="@i"
+                                           asp-route-dni="@dniActual">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-pageIndex="@(Model.PageIndex + 1)"
+                                       asp-route-dni="@dniActual">
+                                        Siguiente <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
+    {
+        <script>
+            let timeoutId;
+
+            document.getElementById('buscadorDni').addEventListener('input', function () {
+                clearTimeout(timeoutId);
+                const dni = this.value.trim();
+
+                timeoutId = setTimeout(async () => {
+                    if (dni.length < 2) {
+                        // Si borra todo, recarga la página sin filtro
+                        if (dni.length === 0) window.location.href = '/Home/Index';
+                        return;
+                    }
+
+                    const response = await fetch(`/Home/BuscarPorDni?dni=${encodeURIComponent(dni)}`);
+                    const data = await response.json();
+
+                    const tbody = document.getElementById('cuerpoTabla');
+                    tbody.innerHTML = '';
+
+                    if (data.items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No se encontraron préstamos para ese DNI</td></tr>';
+                        return;
+                    }
+
+                    data.items.forEach(item => {
+                        const devuelto = item.devuelto;
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${item.empleado.nombre} ${item.empleado.apellido}</strong></td>
+                                <td>${item.empleado.dni}</td>
+                                <td>${item.equipo.categoriaNombre}</td>
+                                <td>${item.equipo.modelo}</td>
+                                <td>${item.fechaPrestamo}</td>
+                                <td>${item.fechaDevolucionEstimada ?? '<span class="text-muted fst-italic">Sin fecha</span>'}</td>
+                                <td>${devuelto
+                                    ? `<span class="badge bg-success">${item.fechaDevolucionReal}</span>`
+                                    : '<span class="badge bg-warning text-dark">Pendiente</span>'}</td>
+                                <td class="text-center">
+                                    ${!devuelto ? `
+                                        <form action="/Prestamo/RegistrarDevolucion/${item.id}" method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Registrar devolución?');">
+                                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value ?? ''}" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-undo me-1"></i>Devolución
+                                            </button>
+                                        </form>` : '<span class="text-muted fst-italic">Devuelto</span>'}
+                                </td>
+                            </tr>`;
+                    });
+
+                    // Ocultamos la paginación durante la búsqueda AJAX
+                    const paginacion = document.getElementById('paginacion');
+                    if (paginacion) paginacion.classList.add('d-none');
+
+                }, 400);
+            });
+
+            document.getElementById('btnLimpiar').addEventListener('click', function () {
+                document.getElementById('buscadorDni').value = '';
+                window.location.href = '/Home/Index';
+            });
+        </script>
+    }
+}

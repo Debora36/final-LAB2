@@ -3,11 +3,10 @@ using final_LAB2.Models.ViewModels;
 using final_LAB2.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace final_LAB2.Controllers
 {
-    // Solo el Admin gestiona usuarios: cubre el requisito de "funcionalidad restringida por rol"
-    [Authorize(Roles = "Admin")]
     public class UsuarioController : Controller
     {
         private const int PageSize = 10;
@@ -18,6 +17,7 @@ namespace final_LAB2.Controllers
             _usuarioService = usuarioService;
         }
 
+        [Authorize(Roles = "Admin")]
         public IActionResult Index(int pageIndex = 1)
         {
             if (pageIndex < 1) pageIndex = 1;
@@ -35,6 +35,7 @@ namespace final_LAB2.Controllers
             return View(modelo);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Disable(int id)
@@ -46,11 +47,12 @@ namespace final_LAB2.Controllers
 
         
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
- 
+           
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Usuario usuario, string confirmPassword)
@@ -79,62 +81,77 @@ namespace final_LAB2.Controllers
             }
         }
  
-        
         [HttpGet]
-        public IActionResult Edit(int id)
+        public IActionResult Edit(int id, bool desdePerfil = false)
         {
+            var usuarioLogueadoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            
+            // Admin puede editar cualquiera, el resto solo su propio perfil
+            if (!User.IsInRole("Admin") && id != usuarioLogueadoId)
+            {
+                TempData["ErrorMessage"] = "No tenés permiso para editar este perfil.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var usuario = _usuarioService.ObtenerPorId(id);
             if (usuario == null)
             {
                 TempData["ErrorMessage"] = "Usuario no encontrado.";
                 return RedirectToAction(nameof(Index));
             }
- 
+
+            ViewBag.DesdePerfil = desdePerfil;
             return View(usuario);
         }
- 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Usuario usuario, string? nuevaPassword, string? confirmarPassword)
+        public IActionResult Edit(int id, Usuario usuario, string? nuevaPassword, 
+                                string? confirmarPassword)
         {
-            if (id != usuario.Id)
+            var usuarioLogueadoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            bool desdePerfil = id == usuarioLogueadoId;
+
+            if (!User.IsInRole("Admin") && id != usuarioLogueadoId)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "No tenés permiso para editar este perfil.";
+                return RedirectToAction("Index", "Home");
             }
- 
-            // El form no pide Password: se cambia aparte con nuevaPassword/confirmarPassword
+
+            if (id != usuario.Id) return NotFound();
+
             ModelState.Remove(nameof(Usuario.Password));
- 
+
             if (!string.IsNullOrEmpty(nuevaPassword) && nuevaPassword != confirmarPassword)
-            {
-                ModelState.AddModelError(nameof(confirmarPassword), "Las contraseñas no coinciden.");
-            }
- 
+                ModelState.AddModelError("confirmarPassword", "Las contraseñas no coinciden.");
+
             if (!ModelState.IsValid)
             {
+                ViewBag.DesdePerfil = desdePerfil;
                 return View(usuario);
             }
- 
+
             var usuarioActual = _usuarioService.ObtenerPorId(id);
             if (usuarioActual == null)
             {
                 TempData["ErrorMessage"] = "Usuario no encontrado.";
                 return RedirectToAction(nameof(Index));
             }
- 
-            // Activo se maneja únicamente desde Disable, nunca desde este formulario
+
             usuario.Activo = usuarioActual.Activo;
-            usuario.Password = usuarioActual.Password; // valor irrelevante: Actualizar() no lo escribe
- 
+            usuario.Password = usuarioActual.Password;
+
             _usuarioService.ActualizarDatos(usuario);
- 
+
             if (!string.IsNullOrEmpty(nuevaPassword))
-            {
                 _usuarioService.CambiarPassword(id, nuevaPassword);
-            }
- 
+
             TempData["SuccessMessage"] = "Usuario actualizado correctamente.";
-            return RedirectToAction(nameof(Index));
+
+            return desdePerfil
+                ? RedirectToAction("Index", "Home")
+                : RedirectToAction(nameof(Index));
         }
+
     }
 }

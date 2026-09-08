@@ -1,0 +1,200 @@
+@model final_LAB2.Models.ViewModels.PaginatedListViewModel<final_LAB2.Models.ViewModels.SolicitudViewModel>
+@{
+    ViewData["Title"] = $"Solicitudes de {ViewBag.EmpleadoNombre}";
+    string? estadoActual = ViewBag.EstadoActual;
+    int empleadoId = ViewBag.EmpleadoId;
+}
+
+<div class="container-fluid">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-times-circle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="card-title mb-0 fw-bold text-primary">
+                        <i class="fas fa-file-alt me-2"></i>Solicitudes de @ViewBag.EmpleadoNombre
+                    </h3>
+                    <a asp-controller="Empleado" asp-action="Index" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Volver a Empleados
+                    </a>
+                </div>
+                <div class="card-body">
+
+                    <!-- Filtros por estado -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="btn-group" role="group">
+                                <a asp-action="PorEmpleado" asp-route-empleadoId="@empleadoId"
+                                   class="btn btn-sm @(estadoActual == null ? "btn-secondary" : "btn-outline-secondary")">
+                                    Todos
+                                </a>
+                                <a asp-action="PorEmpleado" asp-route-empleadoId="@empleadoId" asp-route-estado="Pendiente"
+                                   class="btn btn-sm @(estadoActual == "Pendiente" ? "btn-warning" : "btn-outline-warning")">
+                                    Pendiente
+                                </a>
+                                <a asp-action="PorEmpleado" asp-route-empleadoId="@empleadoId" asp-route-estado="Aprobada"
+                                   class="btn btn-sm @(estadoActual == "Aprobada" ? "btn-success" : "btn-outline-success")">
+                                    Aprobada
+                                </a>
+                                <a asp-action="PorEmpleado" asp-route-empleadoId="@empleadoId" asp-route-estado="Rechazada"
+                                   class="btn btn-sm @(estadoActual == "Rechazada" ? "btn-danger" : "btn-outline-danger")">
+                                    Rechazada
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.TotalCount > 0)
+                    {
+                        <p class="text-muted mb-3">
+                            Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
+                            <strong>@Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount)</strong> de
+                            <strong>@Model.TotalCount</strong> solicitudes
+                        </p>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Categoría</th>
+                                    <th>Motivo</th>
+                                    <th>Tiempo Necesario</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items.Any())
+                                {
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-info">@item.Solicitud.Id</span></td>
+                                            <td>@item.Categoria.Nombre</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Solicitud.Motivo))
+                                                {
+                                                    <span title="@item.Solicitud.Motivo">
+                                                        @(item.Solicitud.Motivo.Length > 40
+                                                            ? item.Solicitud.Motivo.Substring(0, 40) + "…"
+                                                            : item.Solicitud.Motivo)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted fst-italic">Sin motivo</span>
+                                                }
+                                            </td>
+                                            <td>@item.Solicitud.TiempoNecesario</td>
+                                            <td>@item.Solicitud.FechaSolicitud.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @{
+                                                    var claseBadge = item.Solicitud.Estado switch
+                                                    {
+                                                        "Pendiente" => "bg-warning text-dark",
+                                                        "Aprobada"  => "bg-success",
+                                                        "Rechazada" => "bg-danger",
+                                                        _           => "bg-secondary"
+                                                    };
+                                                }
+                                                <span class="badge @claseBadge">@item.Solicitud.Estado</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a class="btn btn-sm btn-outline-info"
+                                                   asp-action="Detalle" asp-route-id="@item.Solicitud.Id">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
+                                                @if (item.Solicitud.Estado == "Pendiente")
+                                                {
+                                                    <form asp-action="CambiarEstado" asp-route-id="@item.Solicitud.Id"
+                                                          method="post" class="d-inline"
+                                                          onsubmit="return confirm('¿Aprobar esta solicitud?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="nuevoEstado" value="Aprobada" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Aprobar">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+
+                                                    <form asp-action="CambiarEstado" asp-route-id="@item.Solicitud.Id"
+                                                          method="post" class="d-inline"
+                                                          onsubmit="return confirm('¿Rechazar esta solicitud?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="nuevoEstado" value="Rechazada" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Rechazar">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            Este empleado no tiene solicitudes
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="PorEmpleado"
+                                       asp-route-empleadoId="@empleadoId"
+                                       asp-route-pageIndex="@(Model.PageIndex - 1)"
+                                       asp-route-estado="@estadoActual">
+                                        <i class="fas fa-angle-left"></i> Anterior
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                        <a class="page-link" asp-action="PorEmpleado"
+                                           asp-route-empleadoId="@empleadoId"
+                                           asp-route-pageIndex="@i"
+                                           asp-route-estado="@estadoActual">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="PorEmpleado"
+                                       asp-route-empleadoId="@empleadoId"
+                                       asp-route-pageIndex="@(Model.PageIndex + 1)"
+                                       asp-route-estado="@estadoActual">
+                                        Siguiente <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

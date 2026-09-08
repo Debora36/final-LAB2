@@ -12,6 +12,8 @@ namespace final_LAB2.Repository.Interfaces
         List<Usuario> ObtenerUsuariosElegibles(int usuarioIdActual = 0);
  
         void Desactivar(int id);
+
+        Empleado? ObtenerPorUsuarioId(int usuarioId);
         
     }
 }

@@ -9,5 +9,6 @@ namespace final_LAB2.Services.Interfaces
         void Crear(Equipo equipo);   // lanza InvalidOperationException si el número de serie ya existe
         void Actualizar(Equipo equipo);
         void DarDeBaja(int id);
+        List<Equipo> ObtenerPorEstado(string estado);
     }
 }

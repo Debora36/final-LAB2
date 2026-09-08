@@ -51,9 +51,6 @@
                                 <td><strong>{{ categoria.nombre }}</strong></td>
                                 <td>{{ categoria.descripcion || '-' }}</td>
                                 <td class="text-center">
-                                    <a :href="'/Equipo?categoriaId=' + categoria.id" class="btn btn-sm btn-outline-info" title="Ver equipos">
-                                        <i class="fas fa-desktop"></i> Ver equipos
-                                    </a>
                                     <button class="btn btn-sm btn-outline-warning" @@click="abrirEditar(categoria)" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </button>

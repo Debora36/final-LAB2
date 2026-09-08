@@ -15,6 +15,11 @@ namespace final_LAB2.Services
 
         public Empleado? ObtenerPorId(int id) => _empleadoRepository.ObtenerPorId(id);
 
+        public Empleado? ObtenerPorUsuarioId(int usuarioId)
+        {
+            return _empleadoRepository.ObtenerPorUsuarioId(usuarioId);
+        }
+
         public List<Empleado> ObtenerTodos() => _empleadoRepository.ObtenerTodos();
 
         public (List<Empleado> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize)

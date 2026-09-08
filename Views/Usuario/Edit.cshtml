@@ -1,6 +1,7 @@
 @model final_LAB2.Models.Usuario
 @{
-    ViewData["Title"] = "Editar Usuario";
+    ViewData["Title"] = ViewBag.DesdePerfil == true ? "Mi Perfil" : "Editar Usuario";
+    bool desdePerfil = ViewBag.DesdePerfil == true;
 }
 
 <div class="container-fluid">
@@ -9,7 +10,8 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-user-edit me-2"></i>Editar Usuario
+                        <i class="fas fa-user-edit me-2"></i>
+                        @(desdePerfil ? "Mi Perfil" : "Editar Usuario")
                     </h3>
                 </div>
                 <div class="card-body">
@@ -17,6 +19,33 @@
 
                     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
                         <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Activo" />
+
+                        <!-- Foto de perfil -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Foto de perfil</label>
+                            <div class="d-flex align-items-center gap-4">
+                                <img id="previewAvatar"
+                                     src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "/img/avatar-default.svg" : Model.AvatarUrl)"
+                                     alt="Avatar"
+                                     class="rounded-circle"
+                                     style="width: 90px; height: 90px; object-fit: cover; border: 3px solid #dee2e6;" />
+                                <div class="flex-grow-1">
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" disabled>
+                                            <i class="fas fa-upload me-1"></i>Subir foto
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                            <i class="fas fa-trash me-1"></i>Eliminar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">JPG, PNG o GIF. Máximo 2MB. (Próximamente)</small>
+                                </div>
+                            </div>
+                            <input type="hidden" asp-for="AvatarUrl" />
+                        </div>
+
+                        <hr class="my-3" />
 
                         <div class="mb-3">
                             <label asp-for="Username" class="form-label"></label>
@@ -30,18 +59,31 @@
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Rol" class="form-label"></label>
-                            <select asp-for="Rol" class="form-select">
-                                <option value="Admin">Admin</option>
-                                <option value="Tecnico">Técnico</option>
-                                <option value="Empleado">Empleado</option>
-                            </select>
-                            <span asp-validation-for="Rol" class="text-danger"></span>
-                        </div>
+                        @if (desdePerfil)
+                        {
+                            <!-- Usuario viendo su propio perfil — rol solo lectura -->
+                            <input type="hidden" asp-for="Rol" />
+                            <div class="mb-3">
+                                <label class="form-label">Rol</label>
+                                <input type="text" class="form-control" value="@Model.Rol" disabled />
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Admin editando — puede cambiar el rol -->
+                            <div class="mb-3">
+                                <label asp-for="Rol" class="form-label"></label>
+                                <select asp-for="Rol" class="form-select">
+                                    <option value="Admin">Admin</option>
+                                    <option value="Tecnico">Técnico</option>
+                                    <option value="Empleado">Empleado</option>
+                                </select>
+                                <span asp-validation-for="Rol" class="text-danger"></span>
+                            </div>
+                        }
 
                         <hr class="my-4" />
-                        <h6 class="text-muted mb-3">Cambiar contraseña (opcional)</h6>
+                        <h6 class="text-muted mb-3">Cambiar contraseña <span class="fw-normal">(opcional)</span></h6>
 
                         <div class="mb-3">
                             <label for="nuevaPassword" class="form-label">Nueva contraseña</label>
@@ -51,14 +93,24 @@
 
                         <div class="mb-3">
                             <label for="confirmarPassword" class="form-label">Confirmar nueva contraseña</label>
-                            <input type="password" id="confirmarPassword" name="confirmarPassword" class="form-control" minlength="6" />
+                            <input type="password" id="confirmarPassword" name="confirmarPassword"
+                                   class="form-control" minlength="6" />
                             <span class="text-danger" id="passwordError"></span>
                         </div>
 
                         <div class="d-flex justify-content-between mt-4">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>Cancelar
-                            </a>
+                            @if (desdePerfil)
+                            {
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Cancelar
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Cancelar
+                                </a>
+                            }
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i>Guardar cambios
                             </button>

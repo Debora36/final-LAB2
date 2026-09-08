@@ -78,6 +78,11 @@
                                                 }
                                             </td>
                                             <td class="text-center">
+                                                <a class="btn btn-sm btn-outline-info"
+                                                asp-controller="Solicitud" asp-action="PorEmpleado" asp-route-empleadoId="@empleado.Id"
+                                                title="Ver solicitudes">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </a>
                                                 <a class="btn btn-sm btn-outline-warning" asp-action="Edit" asp-route-id="@empleado.Id" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </a>

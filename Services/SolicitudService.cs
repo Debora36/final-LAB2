@@ -21,7 +21,7 @@ namespace final_LAB2.Services
         public (List<Solicitud> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize, string? estado = null)
         {
             var items = _solicitudRepository.ObtenerPaginado(pageIndex, pageSize, estado);
-            var totalCount = _solicitudRepository.ContarTotal();
+            var totalCount = _solicitudRepository.ContarTotal(estado);
             return (items, totalCount);
         }
 
@@ -71,6 +71,19 @@ namespace final_LAB2.Services
 
             solicitud.Estado = nuevoEstado;
             _solicitudRepository.Actualizar(solicitud);
+        }
+
+        public (List<Solicitud> Items, int TotalCount) ObtenerPaginadoPorEmpleado(
+            int pageIndex, int pageSize, int empleadoId, string? estado = null)
+        {
+            var items = _solicitudRepository.ObtenerPaginadoPorEmpleado(pageIndex, pageSize, empleadoId, estado);
+            var totalCount = _solicitudRepository.ContarTotalPorEmpleado(empleadoId, estado);
+            return (items, totalCount);
+        }
+
+        public void Eliminar(int id)
+        {
+            _solicitudRepository.Eliminar(id);
         }
     }
 }

@@ -5,6 +5,7 @@ namespace final_LAB2.Services.Interfaces
     public interface IEmpleadoService
     {
         Empleado? ObtenerPorId(int id);
+        Empleado? ObtenerPorUsuarioId(int usuarioId);
         (List<Empleado> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize);
         List<Usuario> ObtenerUsuariosElegibles(int usuarioIdActual = 0);
         void Crear(Empleado empleado);

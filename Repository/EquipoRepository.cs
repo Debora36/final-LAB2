@@ -192,5 +192,28 @@ namespace final_LAB2.Repository
                 CategoriaNombre = reader.GetString("CategoriaNombre")
             };
         }
+
+        public List<Equipo> ObtenerPorEstado(string estado)
+        {
+            var equipos = new List<Equipo>();
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            const string query = @"SELECT e.Id, e.Modelo, e.NumeroSerie, e.CategoriaId, e.Estado, 
+                                        e.RutaArchivoGarantia, c.Nombre AS CategoriaNombre
+                                    FROM EQUIPO e
+                                    JOIN CATEGORIA c ON c.Id = e.CategoriaId
+                                    WHERE e.Estado = @Estado
+                                    ORDER BY e.Modelo";
+
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Estado", estado);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                equipos.Add(MapearEquipo(reader));
+
+            return equipos;
+        }
     }
 }

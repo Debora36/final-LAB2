@@ -8,6 +8,7 @@ namespace final_LAB2.Repository.Interfaces
         int ContarTotal(string? estado, int? categoriaId);
         bool NumeroSerieExiste(string numeroSerie, int idExcluir = 0);
         void DarDeBaja(int id);
+        List<Equipo> ObtenerPorEstado(string estado);
     }
 }
  

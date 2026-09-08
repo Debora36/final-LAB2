@@ -95,49 +95,104 @@ namespace final_LAB2.Repository
             };
         }
 
-        public List<Solicitud> ObtenerPaginado(int pageIndex, int pageSize, string? estado = null)
+       public List<Solicitud> ObtenerPaginado(int pageIndex, int pageSize, string? estado = null)
         {
             var solicitudes = new List<Solicitud>();
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
- 
-            var query = @"SELECT Id, EmpleadoId, CategoriaId, Motivo, TiempoNecesario, FechaSolicitud, Estado
-                                    FROM SOLICITUD";
-            var parameters = new List<(string Name, object Value)>
-            {
-                ("@Offset", (pageIndex - 1) * pageSize),
-                ("@PageSize", pageSize)
-            };
 
-            if (!string.IsNullOrEmpty(estado))
-            {
-                query += " WHERE Estado = @Estado";
-                parameters.Add(("@Estado", estado));
-            }
-
-            query += " ORDER BY FechaSolicitud DESC LIMIT @Offset, @PageSize";
+            var whereEstado = estado != null ? "WHERE Estado = @Estado" : "";
+            var query = $@"SELECT Id, EmpleadoId, CategoriaId, Motivo, TiempoNecesario, FechaSolicitud, Estado
+                        FROM SOLICITUD
+                        {whereEstado}
+                        ORDER BY FechaSolicitud DESC
+                        LIMIT @Offset, @PageSize";
 
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
             command.Parameters.AddWithValue("@PageSize", pageSize);
- 
+            if (estado != null)
+                command.Parameters.AddWithValue("@Estado", estado);
+
             using var reader = command.ExecuteReader();
             while (reader.Read())
-            {
                 solicitudes.Add(MapearSolicitud(reader));
-            }
+
             return solicitudes;
         }
 
-        public int ContarTotal()
+
+        public int ContarTotal(string? estado = null)
+    {
+        using var connection = new MySqlConnection(connectionString);
+        connection.Open();
+
+        var whereEstado = estado != null ? "WHERE Estado = @Estado" : "";
+        var query = $"SELECT COUNT(*) FROM SOLICITUD {whereEstado}";
+
+        using var command = new MySqlCommand(query, connection);
+        if (estado != null)
+            command.Parameters.AddWithValue("@Estado", estado);
+
+        return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+       public List<Solicitud> ObtenerPaginadoPorEmpleado(int pageIndex, int pageSize, int empleadoId, string? estado = null)
+        {
+            var solicitudes = new List<Solicitud>();
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            // Armamos el WHERE dinámicamente según si hay filtro de estado o no
+            var whereEstado = estado != null ? "AND Estado = @Estado" : "";
+
+            var query = $@"SELECT Id, EmpleadoId, CategoriaId, Motivo, TiempoNecesario, FechaSolicitud, Estado
+                        FROM SOLICITUD
+                        WHERE EmpleadoId = @EmpleadoId
+                        {whereEstado}
+                        ORDER BY FechaSolicitud DESC
+                        LIMIT @Offset, @PageSize";
+
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@EmpleadoId", empleadoId);
+            command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
+            command.Parameters.AddWithValue("@PageSize", pageSize);
+
+            if (estado != null)
+                command.Parameters.AddWithValue("@Estado", estado);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                solicitudes.Add(MapearSolicitud(reader));
+
+            return solicitudes;
+        }
+
+        public int ContarTotalPorEmpleado(int empleadoId, string? estado = null)
         {
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
 
-            const string query = @"SELECT COUNT(*) FROM SOLICITUD";
+            var whereEstado = estado != null ? "AND Estado = @Estado" : "";
+            var query = $"SELECT COUNT(*) FROM SOLICITUD WHERE EmpleadoId = @EmpleadoId {whereEstado}";
+
             using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@EmpleadoId", empleadoId);
+            if (estado != null)
+                command.Parameters.AddWithValue("@Estado", estado);
 
             return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        public void Eliminar(int id)
+        {
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            const string query = "DELETE FROM SOLICITUD WHERE Id = @Id";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Id", id);
+            command.ExecuteNonQuery();
         }
     }
 }

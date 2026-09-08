@@ -1,0 +1,69 @@
+@model final_LAB2.Models.Solicitud
+@{
+    ViewData["Title"] = "Editar Solicitud";
+    var categoriasElegibles = ViewBag.Categorias as List<final_LAB2.Models.Categoria> ?? new();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Editar Solicitud
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Editar" asp-route-id="@Model.Id" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="EmpleadoId" />
+                        <input type="hidden" asp-for="FechaSolicitud" />
+                        <input type="hidden" asp-for="Estado" />
+
+                        <div class="mb-3">
+                            <label asp-for="CategoriaId" class="form-label">Categoría del equipo solicitado</label>
+                            <select asp-for="CategoriaId" class="form-select">
+                                @foreach (var categoria in categoriasElegibles)
+                                {
+                                    <option value="@categoria.Id">@categoria.Nombre</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TiempoNecesario" class="form-label">Tiempo necesario</label>
+                            <input asp-for="TiempoNecesario" class="form-control"
+                                   placeholder="Ej: 3 días, 1 semana..." />
+                            <span asp-validation-for="TiempoNecesario" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Motivo" class="form-label">
+                                Motivo <span class="text-muted fw-normal">(opcional)</span>
+                            </label>
+                            <textarea asp-for="Motivo" class="form-control" rows="3"
+                                      placeholder="Describa brevemente el motivo..."></textarea>
+                            <span asp-validation-for="Motivo" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

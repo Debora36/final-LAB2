@@ -14,8 +14,7 @@ namespace final_LAB2.Models
         public required string TiempoNecesario { get; set; }
         [Required(ErrorMessage = "La fecha de solicitud es requerida")]
         public required DateTime FechaSolicitud { get; set; }
-        [Required(ErrorMessage = "El estado es requerido")]
-        public required string Estado { get; set; }
+        public string? Estado { get; set; }
 
         public override string ToString()
         {

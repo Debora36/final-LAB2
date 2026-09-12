@@ -183,13 +183,13 @@ namespace final_LAB2.Repository
         {
             return new Equipo
             {
-                Id = reader.GetInt32("Id"),
-                Modelo = reader.GetString("Modelo"),
-                NumeroSerie = reader.GetString("NumeroSerie"),
-                Estado = reader.GetString("Estado"),
-                RutaArchivoGarantia = reader.IsDBNull(reader.GetOrdinal("RutaArchivoGarantia")) ? null : reader.GetString("RutaArchivoGarantia"),
-                CategoriaId = reader.GetInt32("CategoriaId"),
-                CategoriaNombre = reader.GetString("CategoriaNombre")
+                Id = reader.GetInt32(nameof(Equipo.Id)),
+                Modelo = reader.GetString(nameof(Equipo.Modelo)),
+                NumeroSerie = reader.GetString(nameof(Equipo.NumeroSerie)),
+                Estado = reader.GetString(nameof(Equipo.Estado)),
+                RutaArchivoGarantia = reader.IsDBNull(reader.GetOrdinal(nameof(Equipo.RutaArchivoGarantia))) ? null : reader.GetString(nameof(Equipo.RutaArchivoGarantia)),
+                CategoriaId = reader.GetInt32(nameof(Equipo.CategoriaId)),
+                CategoriaNombre = reader.GetString(nameof(Equipo.CategoriaNombre))
             };
         }
 
@@ -208,6 +208,36 @@ namespace final_LAB2.Repository
 
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@Estado", estado);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                equipos.Add(MapearEquipo(reader));
+
+            return equipos;
+        }
+
+        public List<Equipo> BuscarDisponibles(string? termino, int categoriaId)
+        {
+            var equipos = new List<Equipo>();
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            var wheretermino = !string.IsNullOrWhiteSpace(termino) ? "AND (e.Modelo LIKE @Termino OR e.NumeroSerie LIKE @Termino)" : "";
+
+            var query = $@"SELECT e.Id, e.Modelo, e.NumeroSerie, e.Estado, e.RutaArchivoGarantia, 
+                                e.CategoriaId, c.Nombre AS CategoriaNombre
+                        FROM EQUIPO e
+                        JOIN CATEGORIA c ON c.Id = e.CategoriaId
+                        WHERE e.Estado = 'Disponible'
+                        AND e.CategoriaId = @CategoriaId
+                        {wheretermino}
+                        ORDER BY e.Modelo
+                        LIMIT 10";
+
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@CategoriaId", categoriaId);
+            if (!string.IsNullOrWhiteSpace(termino))
+                command.Parameters.AddWithValue("@Termino", $"%{termino}%");
 
             using var reader = command.ExecuteReader();
             while (reader.Read())

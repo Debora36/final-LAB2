@@ -1,6 +1,18 @@
-html {
-  font-size: 14px;
+html, body {
+    height: 100%;
+    font-size: 14px;
 }
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container.flex-grow-1 {
+    flex: 1;
+}
+
 
 @media (min-width: 768px) {
   html {
@@ -15,10 +27,6 @@ html {
 html {
   position: relative;
   min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

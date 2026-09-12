@@ -15,7 +15,6 @@ namespace final_LAB2.Controllers
             _categoriaService = categoriaService;
         }
 
-        // Vista que hospeda la app de Vue. Categoria es chica: no necesita paginado.
         public IActionResult Index()
         {
             return View();
@@ -24,28 +23,41 @@ namespace final_LAB2.Controllers
         [HttpGet]
         public IActionResult Listar()
         {
-            var categorias = _categoriaService.ObtenerTodos();
-            return Json(categorias);
+            try
+            {
+                var categorias = _categoriaService.ObtenerTodos();
+                return Json(categorias);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         // Búsqueda ajax reutilizada por el filtro de Equipo y por el selector de categoría en su ABM
         [HttpGet]
-        [Authorize] // solo pisa el "Roles=Admin" de la clase; sigue exigiendo login, para cualquier rol
+        [Authorize]
         public IActionResult Buscar(string termino = "", int max = 10)
         {
-            var categorias = _categoriaService.Buscar(termino, max);
-            return Json(categorias);
+            try
+            {
+                var categorias = _categoriaService.Buscar(termino, max);
+                return Json(categorias);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
-        // Lista paginada para el modal de selección (filtro de Equipo, selector al crear un Equipo, etc.)
+        // Lista paginada para el filtro de Equipo
         [HttpGet]
         [Authorize]
         public IActionResult ListarParaSeleccion(int pagina = 1)
         {
-            const int tamPagina = 5;
+            const int tamPagina = 3;
             var (items, totalRegistros) = _categoriaService.ObtenerPaginado(pagina, tamPagina);
             var totalPaginas = (int)Math.Ceiling((double)totalRegistros / tamPagina);
-
             ViewBag.Pagina = pagina;
             ViewBag.TotalPaginas = totalPaginas;
 
@@ -57,12 +69,17 @@ namespace final_LAB2.Controllers
         public IActionResult Crear([FromBody] Categoria categoria)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            _categoriaService.Crear(categoria);
-            return Ok(categoria);
+            try
+            {
+                _categoriaService.Crear(categoria);
+                return Ok(categoria);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpPut]
@@ -70,17 +87,20 @@ namespace final_LAB2.Controllers
         public IActionResult Actualizar(int id, [FromBody] Categoria categoria)
         {
             if (id != categoria.Id)
-            {
                 return BadRequest("El id no coincide.");
-            }
 
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            _categoriaService.Actualizar(categoria);
-            return Ok(categoria);
+            try
+            {
+                _categoriaService.Actualizar(categoria);
+                return Ok(categoria);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpDelete]

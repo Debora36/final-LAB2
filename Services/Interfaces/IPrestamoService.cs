@@ -10,5 +10,6 @@ namespace final_LAB2.Services.Interfaces
         void RegistrarDevolucion(int id);
         (List<Prestamo> Items, int TotalCount) ObtenerPaginadoPorDni(int pageIndex, int pageSize, string dni);
         (List<Prestamo> Items, int TotalCount) ObtenerPaginadoPorEmpleado(int pageIndex, int pageSize, int empleadoId);
+        List<Prestamo> ObtenerVencidos();
     }
 }

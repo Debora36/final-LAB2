@@ -10,5 +10,6 @@ namespace final_LAB2.Services.Interfaces
         void Actualizar(Equipo equipo);
         void DarDeBaja(int id);
         List<Equipo> ObtenerPorEstado(string estado);
+        List<Equipo> BuscarDisponibles(string? termino, int categoriaId);
     }
 }

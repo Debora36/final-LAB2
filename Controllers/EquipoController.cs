@@ -197,5 +197,22 @@ namespace final_LAB2.Controllers
                 System.IO.File.Delete(rutaFisica);
             }
         }
+
+        [HttpGet]
+        public IActionResult BuscarDisponibles(string? q, int categoriaId)
+        {
+            try
+            {
+                var equipos = _equipoService.BuscarDisponibles(q, categoriaId);
+                var resultado = equipos.Select(e => new { id = e.Id, text = $"{e.Modelo} — {e.NumeroSerie}" });
+                return Json(new { results = resultado });
+            }
+            catch (Exception ex)
+            {
+                // results siempre es lista, el error va aparte
+                return Json(new { results = new List<object>(), error = ex.Message });
+            }
+        }
     }
+    
 }

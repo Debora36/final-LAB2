@@ -152,9 +152,9 @@ namespace final_LAB2.Repository
         {
             return new Categoria
             {
-                Id = reader.GetInt32("Id"),
-                Nombre = reader.GetString("Nombre"),
-                Descripcion = reader.IsDBNull(reader.GetOrdinal("Descripcion")) ? null : reader.GetString("Descripcion")
+                Id = reader.GetInt32(nameof(Categoria.Id)),
+                Nombre = reader.GetString(nameof(Categoria.Nombre)),
+                Descripcion = reader.IsDBNull(reader.GetOrdinal(nameof(Categoria.Descripcion))) ? null : reader.GetString(nameof(Categoria.Descripcion))
             };
         }
     }

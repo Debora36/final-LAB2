@@ -24,19 +24,17 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm">
+            <div class="card border-0">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h3 class="card-title mb-0 fw-bold text-primary">
-                        <i class="fas fa-file-alt me-2"></i>Lista de Solicitudes
+                        <i class="bi bi-envelope-paper-fill me-2"></i>Lista de Solicitudes
                     </h3>
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                        @if (User.IsInRole("Empleado"))
-                        {
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearSolicitud">
-                                <i class="fas fa-plus me-1"></i>Nueva Solicitud
-                            </button>
-                        }
-                    </div>
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <a class="btn btn-primary" asp-action="Create">
+                            <i class="fas fa-plus me-1"></i>Nueva solicitud
+                        </a>
+                    }
                 </div>
                 <div class="card-body">
 
@@ -151,6 +149,7 @@
                                                     <button type="button" class="btn btn-sm btn-outline-success"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#modalAprobar-@item.Solicitud.Id"
+                                                            data-categoria="@item.Solicitud.CategoriaId"
                                                             title="Aprobar">
                                                         <i class="fas fa-check"></i>
                                                     </button>
@@ -218,80 +217,12 @@
         </div>
     </div>
 </div>
-
-@if (User.IsInRole("Empleado"))
-{
-    var categoriasElegibles = ViewBag.Categorias as List<final_LAB2.Models.Categoria> ?? new();
-
-    <div class="modal fade" id="modalCrearSolicitud" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-file-alt me-2"></i>Nueva Solicitud
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <form asp-action="Crear" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="modal-body">
-                        @if (TempData["ErrorModal"] != null)
-                        {
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle me-1"></i>@TempData["ErrorModal"]
-                            </div>
-                        }
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Categoría del equipo solicitado</label>
-                            <select name="CategoriaId" class="form-select">
-                                <option value="">Seleccione una categoría</option>
-                                @foreach (var categoria in categoriasElegibles)
-                                {
-                                    <option value="@categoria.Id">@categoria.Nombre</option>
-                                }
-                            </select>
-                            <span class="text-danger" id="error-categoria"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Tiempo necesario</label>
-                            <input type="text" name="TiempoNecesario" class="form-control"
-                                   placeholder="Ej: 3 días, 1 semana..." />
-                            <span class="text-danger" id="error-tiempo"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Motivo <span class="text-muted fw-normal">(opcional)</span>
-                            </label>
-                            <textarea name="Motivo" class="form-control" rows="3"
-                                      placeholder="Describa brevemente el motivo..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-1"></i>Enviar Solicitud
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-}
 <!-- Modal Aprobar — uno por solicitud -->
 @foreach (var item in Model.Items)
 {
     @if (item.Solicitud.Estado == "Pendiente" && (User.IsInRole("Admin") || User.IsInRole("Tecnico")))
     {
-        <div class="modal fade" id="modalAprobar-@item.Solicitud.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalAprobar-@item.Solicitud.Id" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -311,12 +242,11 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Equipo a prestar</label>
-                                <select name="equipoId" class="form-select" required>
-                                    <option value="">Seleccione un equipo disponible</option>
-                                    @foreach (var equipo in ViewBag.EquiposDisponibles as List<final_LAB2.Models.Equipo> ?? new())
-                                    {
-                                        <option value="@equipo.Id">@equipo.Modelo — @equipo.NumeroSerie</option>
-                                    }
+                                <select name="equipoId" 
+                                        class="modern-select2 equipo-select-ajax w-100" 
+                                        data-categoria="@item.Solicitud.CategoriaId"
+                                        required>
+                                    <option value="">Buscar equipo...</option>
                                 </select>
                             </div>
 
@@ -349,4 +279,56 @@
             });
         </script>
     }
+
+    <script>
+        document.addEventListener('show.bs.modal', function (event) {
+            const modal = event.target;
+            console.log('modal id:', modal.id);
+
+            if (!modal.id.startsWith('modalAprobar')) return;
+
+            const boton = event.relatedTarget;
+            if (!boton) return;
+
+            const categoriaId = boton.dataset.categoria;
+            const select = modal.querySelector('.equipo-select-ajax');
+
+            if (!select) return;
+
+            if ($(select).data('select2')) {
+                $(select).select2('destroy');
+            }
+
+            $(select).select2({
+            dropdownParent: $(modal),
+            placeholder: 'Buscar equipo por modelo o número de serie...',
+            minimumInputLength: 0,
+            language: {
+                inputTooShort: () => 'Escribí para buscar...',
+                noResults: () => 'No hay equipos disponibles para esta categoría',
+                searching: () => 'Buscando...'
+            },
+            ajax: {
+                url: '/Equipo/BuscarDisponibles',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        categoriaId: categoriaId
+                    };
+                },
+                processResults: function (data) {
+                    return { results: data.results ?? [] };
+                },
+                error: function () {
+                    const contenedor = modal.querySelector('.sin-equipos');
+                    if (contenedor) contenedor.remove();
+                    select.insertAdjacentHTML('afterend',
+                        '<small class="text-danger sin-equipos">Error al buscar equipos. Intentá de nuevo.</small>');
+                }
+            }
+        });
+        });
+    </script>
 }

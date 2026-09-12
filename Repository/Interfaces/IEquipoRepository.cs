@@ -9,6 +9,7 @@ namespace final_LAB2.Repository.Interfaces
         bool NumeroSerieExiste(string numeroSerie, int idExcluir = 0);
         void DarDeBaja(int id);
         List<Equipo> ObtenerPorEstado(string estado);
+        List<Equipo> BuscarDisponibles(string? termino, int categoriaId);
     }
 }
  

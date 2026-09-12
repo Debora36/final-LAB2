@@ -88,16 +88,16 @@ namespace final_LAB2.Controllers
 
         [Authorize(Roles = "Empleado")]
         [HttpGet]
-        public IActionResult Crear()
+        public IActionResult Create()
         {
-            //ViewBag.Categorias = _categoriaService.ObtenerTodos();
+            ViewBag.Categorias = _categoriaService.ObtenerTodos();
             return View();
         }
 
        [Authorize(Roles = "Empleado")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Crear(Solicitud solicitud)
+        public IActionResult Create(Solicitud solicitud)
         {
             var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
             solicitud.EmpleadoId = empleadoId;
@@ -105,29 +105,23 @@ namespace final_LAB2.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Volvemos al Index con el modal abierto
-                TempData["AbrirModal"] = true;
-                // Los errores viajan por TempData para mostrarlos en el modal
-                TempData["ErrorModal"] = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .FirstOrDefault();
-
-                return RedirectToAction(nameof(Index));
+                // Ahora volvemos a la vista Create, no al Index
+                ViewBag.Categorias = _categoriaService.ObtenerTodos();
+                return View(solicitud);
             }
 
             try
             {
                 _solicitudService.Crear(solicitud);
                 TempData["SuccessMessage"] = "Solicitud enviada correctamente.";
+                return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                TempData["AbrirModal"] = true;
-                TempData["ErrorModal"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                ViewBag.Categorias = _categoriaService.ObtenerTodos();
+                return View(solicitud);
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
         [Authorize(Roles = "Empleado")]

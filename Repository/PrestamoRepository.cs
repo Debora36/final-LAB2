@@ -43,23 +43,31 @@ namespace final_LAB2.Repository
             return prestamos;
         }
 
+        private static string ArmarWhereEstado(string? estado)
+        {
+            return estado switch
+            {
+                "Activo" => "WHERE FechaDevolucionReal IS NULL",
+                "Devuelto" => "WHERE FechaDevolucionReal IS NOT NULL",
+                "Vencido" => "WHERE FechaDevolucionReal IS NULL AND FechaDevolucionEstimada < NOW()",
+                _ => ""
+            };
+        }
+
         public List<Prestamo> ObtenerPaginado(int pageIndex, int pageSize, string? estado = null)
         {
             var prestamos = new List<Prestamo>();
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
 
-            // "Activo" = sin fecha de devolución real, "Devuelto" = con fecha de devolución real
-            var whereEstado = estado == "Activo" ? "WHERE FechaDevolucionReal IS NULL"
-                            : estado == "Devuelto" ? "WHERE FechaDevolucionReal IS NOT NULL"
-                            : "";
+            var whereEstado = ArmarWhereEstado(estado);
 
             var query = $@"SELECT Id, EquipoId, EmpleadoId, FechaPrestamo,
-                                  FechaDevolucionEstimada, FechaDevolucionReal
-                           FROM PRESTAMO
-                           {whereEstado}
-                           ORDER BY FechaPrestamo DESC
-                           LIMIT @Offset, @PageSize";
+                                FechaDevolucionEstimada, FechaDevolucionReal
+                        FROM PRESTAMO
+                        {whereEstado}
+                        ORDER BY FechaPrestamo DESC
+                        LIMIT @Offset, @PageSize";
 
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
@@ -72,12 +80,14 @@ namespace final_LAB2.Repository
             return prestamos;
         }
 
-        public int ContarTotal()
+        public int ContarTotal(string? estado = null)
         {
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
 
-            const string query = "SELECT COUNT(*) FROM PRESTAMO";
+            var whereEstado = ArmarWhereEstado(estado);
+            var query = $"SELECT COUNT(*) FROM PRESTAMO {whereEstado}";
+
             using var command = new MySqlCommand(query, connection);
             return Convert.ToInt32(command.ExecuteScalar());
         }
@@ -119,14 +129,14 @@ namespace final_LAB2.Repository
         {
             return new Prestamo
             {
-                Id = reader.GetInt32("Id"),
-                EquipoId = reader.GetInt32("EquipoId"),
-                EmpleadoId = reader.GetInt32("EmpleadoId"),
-                FechaPrestamo = reader.GetDateTime("FechaPrestamo"),
-                FechaDevolucionEstimada = reader.IsDBNull(reader.GetOrdinal("FechaDevolucionEstimada"))
-                    ? null : reader.GetDateTime("FechaDevolucionEstimada"),
-                FechaDevolucionReal = reader.IsDBNull(reader.GetOrdinal("FechaDevolucionReal"))
-                    ? null : reader.GetDateTime("FechaDevolucionReal")
+                Id = reader.GetInt32(nameof(Prestamo.Id)),
+                EquipoId = reader.GetInt32(nameof(Prestamo.EquipoId)),
+                EmpleadoId = reader.GetInt32(nameof(Prestamo.EmpleadoId)),
+                FechaPrestamo = reader.GetDateTime(nameof(Prestamo.FechaPrestamo)),
+                FechaDevolucionEstimada = reader.IsDBNull(reader.GetOrdinal(nameof(Prestamo.FechaDevolucionEstimada)))
+                    ? null : reader.GetDateTime(nameof(Prestamo.FechaDevolucionEstimada)),
+                FechaDevolucionReal = reader.IsDBNull(reader.GetOrdinal(nameof(Prestamo.FechaDevolucionReal)))
+                    ? null : reader.GetDateTime(nameof(Prestamo.FechaDevolucionReal))
             };
         }
 
@@ -204,6 +214,30 @@ namespace final_LAB2.Repository
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@EmpleadoId", empleadoId);
             return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        public List<Prestamo> ObtenerVencidos()
+        {
+            var prestamos = new List<Prestamo>();
+            using var connection = new MySqlConnection(connectionString);
+            connection.Open();
+
+            const string query = @"SELECT Id, EquipoId, EmpleadoId, FechaPrestamo,
+                                        FechaDevolucionEstimada, FechaDevolucionReal
+                                FROM PRESTAMO
+                                WHERE FechaDevolucionReal IS NULL
+                                    AND FechaDevolucionEstimada IS NOT NULL
+                                    AND FechaDevolucionEstimada < @Ahora
+                                ORDER BY FechaDevolucionEstimada ASC";
+
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Ahora", DateTime.Now);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                prestamos.Add(MapearPrestamo(reader));
+
+            return prestamos;
         }
     }
 }

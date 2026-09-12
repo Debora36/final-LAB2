@@ -14,7 +14,7 @@ namespace final_LAB2.Models
         [Required(ErrorMessage = "El DNI es requerido")]
         [StringLength(10, ErrorMessage = "El DNI no puede exceder los 10 caracteres")]
         public required string DNI { get; set; }
-        [Phone(ErrorMessage = "El número de teléfono no es válido")]
+        [RegularExpression(@"^\+?\d{10,13}$", ErrorMessage = "El teléfono debe tener entre 10 y 13 dígitos")]
         public string? Telefono { get; set; }
         public int? UsuarioId { get; set; }
         public bool Activo { get; set; } = true;

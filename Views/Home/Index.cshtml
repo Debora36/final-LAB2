@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Inicio";
     string? dniActual = ViewBag.DNIActual;
+    string? estadoActual = ViewBag.EstadoActual;
 }
 
 <div class="container-fluid">
@@ -24,7 +25,7 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm">
+            <div class="card border-0">
                 <div class="card-header bg-white py-3">
                     <h3 class="card-title mb-0 fw-bold text-primary">
                         <i class="fas fa-handshake me-2"></i>
@@ -38,27 +39,44 @@
                         }
                     </h3>
                 </div>
-                <div class="card-body">
-
-                    <!-- Buscador por DNI — solo Admin y Tecnico -->
-                    @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" id="buscadorDni" class="form-control"
-                                           placeholder="Buscar por DNI del empleado..."
-                                           value="@dniActual" />
-                                    <button class="btn btn-outline-secondary" type="button" id="btnLimpiar">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
+                <div class="card-body ">
+                    <div class="bg-white d-flex justify-content-between align-items-center">
+                        <div class="row">
+                            <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+                                @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
+                                {
+                                    <div class="btn-group mb-3" role="group">
+                                        <a asp-action="Index" asp-route-dni="@dniActual"
+                                           class="btn btn-sm @(estadoActual == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                                        <a asp-action="Index" asp-route-dni="@dniActual" asp-route-estado="Activo"
+                                           class="btn btn-sm @(estadoActual == "Activo" ? "btn-warning" : "btn-outline-warning")">Pendientes</a>
+                                        <a asp-action="Index" asp-route-dni="@dniActual" asp-route-estado="Devuelto"
+                                           class="btn btn-sm @(estadoActual == "Devuelto" ? "btn-success" : "btn-outline-success")">Devueltos</a>
+                                        <a asp-action="Index" asp-route-dni="@dniActual" asp-route-estado="Vencido"
+                                           class="btn btn-sm @(estadoActual == "Vencido" ? "btn-danger" : "btn-outline-danger")">Vencidos</a>
+                                    </div>
+                                }
                             </div>
                         </div>
-                    }
+                        <!-- Buscador por DNI — solo Admin y Tecnico -->
+                        @if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
+                        {
+                            <div class="row">
+                                <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" id="buscadorDni" class="form-control"
+                                               placeholder="Buscar por DNI del empleado..." value="@dniActual" />
+                                        <button class="btn btn-outline-secondary" type="button" id="btnLimpiar">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
 
-                    @if (Model.TotalCount > 0)
+                    </div>
+                     @if (Model.TotalCount > 0)
                     {
                         <p class="text-muted mb-3" id="contadorRegistros">
                             Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
@@ -66,6 +84,7 @@
                             <strong>@Model.TotalCount</strong> préstamos
                         </p>
                     }
+
 
                     <div class="table-responsive" id="contenedorTabla">
                         <table class="table table-hover align-middle">
@@ -78,6 +97,7 @@
                                     }
                                     <th>Categoría</th>
                                     <th>Equipo</th>
+                                    <th>NumeroSerie</th>
                                     <th>Fecha Préstamo</th>
                                     <th>Devolución Estimada</th>
                                     <th>Devolución Real</th>
@@ -100,6 +120,7 @@
                                             }
                                             <td>@item.Equipo.CategoriaNombre</td>
                                             <td>@item.Equipo.Modelo</td>
+                                            <td>@item.Equipo.NumeroSerie</td>
                                             <td>@item.Prestamo.FechaPrestamo.ToString("dd/MM/yyyy")</td>
                                             <td>
                                                 @if (item.Prestamo.FechaDevolucionEstimada.HasValue)
@@ -129,11 +150,11 @@
                                                     @if (!item.Prestamo.FechaDevolucionReal.HasValue)
                                                     {
                                                         <form asp-controller="Prestamo" asp-action="RegistrarDevolucion"
-                                                              asp-route-id="@item.Prestamo.Id"
-                                                              method="post" class="d-inline"
+                                                              asp-route-id="@item.Prestamo.Id" method="post" class="d-inline"
                                                               onsubmit="return confirm('¿Registrar devolución de este equipo?');">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Registrar devolución">
+                                                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                                                    title="Registrar devolución">
                                                                 <i class="fas fa-undo me-1"></i>Devolución
                                                             </button>
                                                         </form>
@@ -164,24 +185,21 @@
                         <nav aria-label="Navegación de páginas" id="paginacion">
                             <ul class="pagination justify-content-center">
                                 <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                                    <a class="page-link" asp-action="Index"
-                                       asp-route-pageIndex="@(Model.PageIndex - 1)"
-                                       asp-route-dni="@dniActual">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex - 1)"
+                                       asp-route-estado="@estadoActual" asp-route-dni="@dniActual">
                                         <i class="fas fa-angle-left"></i> Anterior
                                     </a>
                                 </li>
                                 @for (int i = 1; i <= Model.TotalPages; i++)
                                 {
                                     <li class="page-item @(i == Model.PageIndex ? "active" : "")">
-                                        <a class="page-link" asp-action="Index"
-                                           asp-route-pageIndex="@i"
-                                           asp-route-dni="@dniActual">@i</a>
+                                        <a class="page-link" asp-action="Index" asp-route-pageIndex="@i"
+                                           asp-route-estado="@estadoActual" asp-route-dni="@dniActual">@i</a>
                                     </li>
                                 }
                                 <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                                    <a class="page-link" asp-action="Index"
-                                       asp-route-pageIndex="@(Model.PageIndex + 1)"
-                                       asp-route-dni="@dniActual">
+                                    <a class="page-link" asp-action="Index" asp-route-pageIndex="@(Model.PageIndex + 1)"
+                                       asp-route-estado="@estadoActual" asp-route-dni="@dniActual">
                                         Siguiente <i class="fas fa-angle-right"></i>
                                     </a>
                                 </li>
@@ -216,6 +234,10 @@
                     const data = await response.json();
 
                     const tbody = document.getElementById('cuerpoTabla');
+                    if (!response.ok) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Error al buscar préstamos</td></tr>';
+                        return;
+                    }
                     tbody.innerHTML = '';
 
                     if (data.items.length === 0) {
@@ -226,27 +248,27 @@
                     data.items.forEach(item => {
                         const devuelto = item.devuelto;
                         tbody.innerHTML += `
-                            <tr>
-                                <td><strong>${item.empleado.nombre} ${item.empleado.apellido}</strong></td>
-                                <td>${item.empleado.dni}</td>
-                                <td>${item.equipo.categoriaNombre}</td>
-                                <td>${item.equipo.modelo}</td>
-                                <td>${item.fechaPrestamo}</td>
-                                <td>${item.fechaDevolucionEstimada ?? '<span class="text-muted fst-italic">Sin fecha</span>'}</td>
-                                <td>${devuelto
-                                    ? `<span class="badge bg-success">${item.fechaDevolucionReal}</span>`
-                                    : '<span class="badge bg-warning text-dark">Pendiente</span>'}</td>
-                                <td class="text-center">
-                                    ${!devuelto ? `
-                                        <form action="/Prestamo/RegistrarDevolucion/${item.id}" method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Registrar devolución?');">
-                                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value ?? ''}" />
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                <i class="fas fa-undo me-1"></i>Devolución
-                                            </button>
-                                        </form>` : '<span class="text-muted fst-italic">Devuelto</span>'}
-                                </td>
-                            </tr>`;
+                                    <tr>
+                                        <td><strong>${item.empleado.nombre} ${item.empleado.apellido}</strong></td>
+                                        <td>${item.empleado.dni}</td>
+                                        <td>${item.equipo.categoriaNombre}</td>
+                                        <td>${item.equipo.modelo}</td>
+                                        <td>${item.fechaPrestamo}</td>
+                                        <td>${item.fechaDevolucionEstimada ?? '<span class="text-muted fst-italic">Sin fecha</span>'}</td>
+                                        <td>${devuelto
+                                ? `<span class="badge bg-success">${item.fechaDevolucionReal}</span>`
+                                : '<span class="badge bg-warning text-dark">Pendiente</span>'}</td>
+                                        <td class="text-center">
+                                            ${!devuelto ? `
+                                                <form action="/Prestamo/RegistrarDevolucion/${item.id}" method="post" class="d-inline"
+                                                      onsubmit="return confirm('¿Registrar devolución?');">
+                                                    <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value ?? ''}" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                                        <i class="fas fa-undo me-1"></i>Devolución
+                                                    </button>
+                                                </form>` : '<span class="text-muted fst-italic">Devuelto</span>'}
+                                        </td>
+                                    </tr>`;
                     });
 
                     // Ocultamos la paginación durante la búsqueda AJAX

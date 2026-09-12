@@ -28,32 +28,6 @@ namespace final_LAB2.Controllers
             _solicitudService = solicitudService;
         }
 
-        // Lista todos los préstamos — activos y devueltos
-        public IActionResult Index(int pageIndex = 1, string? estado = null)
-        {
-            if (pageIndex < 1) pageIndex = 1;
-
-            var (prestamos, totalCount) = _prestamoService.ObtenerPaginado(pageIndex, PageSize, estado);
-
-            var listaViewModel = prestamos.Select(p => new PrestamoViewModel
-            {
-                Prestamo = p,
-                Empleado = _empleadoService.ObtenerPorId(p.EmpleadoId)!,
-                Equipo = _equipoService.ObtenerPorId(p.EquipoId)!
-            }).ToList();
-
-            var modelo = new PaginatedListViewModel<PrestamoViewModel>
-            {
-                Items = listaViewModel,
-                PageIndex = pageIndex,
-                PageSize = PageSize,
-                TotalCount = totalCount
-            };
-
-            ViewBag.EstadoActual = estado;
-            return View(modelo);
-        }
-
         // Registra la devolución del equipo
         [HttpPost]
         [ValidateAntiForgeryToken]

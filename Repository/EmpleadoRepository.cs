@@ -175,13 +175,13 @@ namespace final_LAB2.Repository
         {
             return new Empleado
             {
-                Id = reader.GetInt32("Id"),
-                Nombre = reader.GetString("Nombre"),
-                Apellido = reader.GetString("Apellido"),
-                DNI = reader.GetString("DNI"),
-                Telefono = reader.IsDBNull(reader.GetOrdinal("Telefono")) ? null : reader.GetString("Telefono"),
-                UsuarioId = reader.IsDBNull(reader.GetOrdinal("UsuarioId")) ? null : reader.GetInt32("UsuarioId"),
-                Activo = reader.GetBoolean("Activo")
+                Id = reader.GetInt32(nameof(Empleado.Id)),
+                Nombre = reader.GetString(nameof(Empleado.Nombre)),
+                Apellido = reader.GetString(nameof(Empleado.Apellido)),
+                DNI = reader.GetString(nameof(Empleado.DNI)),
+                Telefono = reader.IsDBNull(reader.GetOrdinal(nameof(Empleado.Telefono))) ? null : reader.GetString(nameof(Empleado.Telefono)),
+                UsuarioId = reader.IsDBNull(reader.GetOrdinal(nameof(Empleado.UsuarioId))) ? null : reader.GetInt32(nameof(Empleado.UsuarioId)),
+                Activo = reader.GetBoolean(nameof(Empleado.Activo))
             };
         }
    

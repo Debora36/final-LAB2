@@ -11,6 +11,7 @@ public class Usuario
         [Required(ErrorMessage = "El rol es requerido")]
         public required string Rol { get; set; }
         public string? AvatarUrl { get; set; }
+        [Required(ErrorMessage = "La contraseña es requerida")]
         [StringLength(255, MinimumLength = 6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres y no puede exceder los 255 caracteres")]
         public required string Password { get; set; }
         [Required(ErrorMessage = "El correo electrónico es requerido")]

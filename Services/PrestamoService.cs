@@ -20,7 +20,7 @@ namespace final_LAB2.Services
         public (List<Prestamo> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize, string? estado = null)
         {
             var items = _prestamoRepository.ObtenerPaginado(pageIndex, pageSize, estado);
-            var totalCount = _prestamoRepository.ContarTotal();
+            var totalCount = _prestamoRepository.ContarTotal(estado);
             return (items, totalCount);
         }
 
@@ -71,6 +71,11 @@ namespace final_LAB2.Services
             var items = _prestamoRepository.ObtenerPaginadoPorEmpleado(pageIndex, pageSize, empleadoId);
             var totalCount = _prestamoRepository.ContarTotalPorEmpleado(empleadoId);
             return (items, totalCount);
+        }
+
+        public List<Prestamo> ObtenerVencidos()
+        {
+            return _prestamoRepository.ObtenerVencidos();
         }
     }
 }

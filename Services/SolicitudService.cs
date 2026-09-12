@@ -68,6 +68,8 @@ namespace final_LAB2.Services
             var solicitud = _solicitudRepository.ObtenerPorId(id);
             if (solicitud == null)
                 throw new InvalidOperationException("La solicitud especificada no existe.");
+            if (solicitud.Estado != "Pendiente")
+                throw new InvalidOperationException($"No se puede cambiar el estado: la solicitud ya está '{solicitud.Estado}'.");
 
             solicitud.Estado = nuevoEstado;
             _solicitudRepository.Actualizar(solicitud);

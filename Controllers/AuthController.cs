@@ -20,6 +20,7 @@ namespace final_LAB2.Controllers
         }
  
         [AllowAnonymous]
+        // GET: /Auth/Login
         public IActionResult Login(string? returnUrl = null)
         {
             ViewBag.ReturnUrl = returnUrl;

@@ -4,6 +4,8 @@ using final_LAB2.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 
 namespace final_LAB2.Controllers
 {
@@ -11,10 +13,12 @@ namespace final_LAB2.Controllers
     {
         private const int PageSize = 10;
         private readonly IUsuarioService _usuarioService;
+        private readonly IEmpleadoService _empleadoService;
 
-        public UsuarioController(IUsuarioService usuarioService)
+        public UsuarioController(IUsuarioService usuarioService, IEmpleadoService empleadoService)
         {
             _usuarioService = usuarioService;
+            _empleadoService = empleadoService;
         }
 
         [Authorize(Roles = "Admin")]
@@ -106,11 +110,12 @@ namespace final_LAB2.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Usuario usuario, string? nuevaPassword, 
-                                string? confirmarPassword)
+        public async Task<IActionResult> Edit(int id, Usuario usuario, string? nuevaPassword,
+                          string? confirmarPassword, IFormFile? archivoAvatar,
+                          [FromServices] IWebHostEnvironment environment)
         {
             var usuarioLogueadoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            bool desdePerfil = id == usuarioLogueadoId;
+            bool desdePerfil = id == usuarioLogueadoId; // Si el usuario está editando su propio perfil, se considera "desdePerfil"
 
             if (!User.IsInRole("Admin") && id != usuarioLogueadoId)
             {
@@ -141,9 +146,65 @@ namespace final_LAB2.Controllers
             usuario.Activo = usuarioActual.Activo;
             usuario.Password = usuarioActual.Password;
 
+            // Subir avatar si se seleccionó uno
+            if (archivoAvatar != null && archivoAvatar.Length > 0)
+            {
+                var carpeta = Path.Combine(environment.WebRootPath, "Uploads", "Avatars");
+                if (!Directory.Exists(carpeta))
+                    Directory.CreateDirectory(carpeta);
+
+                var nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(archivoAvatar.FileName);
+                var rutaFisica = Path.Combine(carpeta, nombreArchivo);
+
+                using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                {
+                    archivoAvatar.CopyTo(stream);
+                }
+
+                // Eliminar avatar anterior si tenía uno
+                if (!string.IsNullOrWhiteSpace(usuarioActual.AvatarUrl))
+                {
+                    var rutaAnterior = Path.Combine(environment.WebRootPath,
+                        usuarioActual.AvatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    if (System.IO.File.Exists(rutaAnterior))
+                        System.IO.File.Delete(rutaAnterior);
+                }
+
+                usuario.AvatarUrl = $"/Uploads/Avatars/{nombreArchivo}";
+            }
+            else
+            {
+                // Si no subió nada, mantener el avatar actual
+                usuario.AvatarUrl = usuarioActual.AvatarUrl;
+            }
             _usuarioService.ActualizarDatos(usuario);
 
-            if (!string.IsNullOrEmpty(nuevaPassword))
+            // Solo renovamos la cookie si el usuario editó su propio perfil
+            if (id == usuarioLogueadoId)
+            {
+                var usuarioActualizado = _usuarioService.ObtenerPorId(id);
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, usuarioActualizado!.Id.ToString()),
+                    new Claim(ClaimTypes.Name, usuarioActualizado.Username),
+                    new Claim(ClaimTypes.Email, usuarioActualizado.Email),
+                    new Claim(ClaimTypes.Role, usuarioActualizado.Rol)
+                };
+
+                if (!string.IsNullOrWhiteSpace(usuarioActualizado.AvatarUrl))
+                    claims.Add(new Claim("AvatarUrl", usuarioActualizado.AvatarUrl));
+
+                var empleado = _empleadoService.ObtenerPorUsuarioId(usuarioActualizado.Id);
+                if (empleado != null)
+                    claims.Add(new Claim("EmpleadoId", empleado.Id.ToString()));
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity));
+            }
+
+            if (desdePerfil && !string.IsNullOrEmpty(nuevaPassword))
                 _usuarioService.CambiarPassword(id, nuevaPassword);
 
             TempData["SuccessMessage"] = "Usuario actualizado correctamente.";

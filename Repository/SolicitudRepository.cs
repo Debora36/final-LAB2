@@ -85,13 +85,13 @@ namespace final_LAB2.Repository
         {
             return new Solicitud
             {
-                Id = reader.GetInt32("Id"),
-                EmpleadoId = reader.GetInt32("EmpleadoId"),
-                CategoriaId = reader.GetInt32("CategoriaId"),
-                Motivo = reader.IsDBNull(reader.GetOrdinal("Motivo")) ? null : reader.GetString("Motivo"),
-                TiempoNecesario = reader.GetString("TiempoNecesario"),
-                FechaSolicitud = reader.GetDateTime("FechaSolicitud"),
-                Estado = reader.GetString("Estado")
+                Id = reader.GetInt32(nameof(Solicitud.Id)),
+                EmpleadoId = reader.GetInt32(nameof(Solicitud.EmpleadoId)),
+                CategoriaId = reader.GetInt32(nameof(Solicitud.CategoriaId)),
+                Motivo = reader.IsDBNull(reader.GetOrdinal(nameof(Solicitud.Motivo))) ? null : reader.GetString(nameof(Solicitud.Motivo)),
+                TiempoNecesario = reader.GetString(nameof(Solicitud.TiempoNecesario)),
+                FechaSolicitud = reader.GetDateTime(nameof(Solicitud.FechaSolicitud)),
+                Estado = reader.GetString(nameof(Solicitud.Estado))
             };
         }
 

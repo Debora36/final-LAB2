@@ -45,5 +45,10 @@ namespace final_LAB2.Services
         {
             return _equipoRepository.ObtenerPorEstado(estado);
         }
+
+        public List<Equipo> BuscarDisponibles(string? termino, int categoriaId)
+        {
+            return _equipoRepository.BuscarDisponibles(termino, categoriaId);
+        }
     }
 }

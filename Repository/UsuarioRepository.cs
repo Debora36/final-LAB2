@@ -161,13 +161,13 @@ namespace final_LAB2.Repository
         {
             return new Usuario
             {
-                Id = reader.GetInt32("Id"),
-                Username = reader.GetString("Username"),
-                Password = reader.GetString("Password"),
-                Rol = reader.GetString("Rol"),
-                AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl")) ? null : reader.GetString("AvatarUrl"),
-                Email = reader.GetString("Email"),
-                Activo = reader.GetBoolean("Activo")
+                Id = reader.GetInt32(nameof(Usuario.Id)),
+                Username = reader.GetString(nameof(Usuario.Username)),
+                Password = reader.GetString(nameof(Usuario.Password)),
+                Rol = reader.GetString(nameof(Usuario.Rol)),
+                AvatarUrl = reader.IsDBNull(reader.GetOrdinal(nameof(Usuario.AvatarUrl))) ? null : reader.GetString(nameof(Usuario.AvatarUrl)),
+                Email = reader.GetString(nameof(Usuario.Email)),
+                Activo = reader.GetBoolean(nameof(Usuario.Activo))
             };
         }
     }

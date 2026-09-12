@@ -69,4 +69,98 @@ namespace final_LAB2.Controllers.Api
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+
+
+    [ApiController]
+    [Route("api/prestamos")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "TecnicoOAdmin")]
+    public class PrestamosApiController : ControllerBase
+    {
+        private readonly IPrestamoService _prestamoService;
+
+        public PrestamosApiController(IPrestamoService prestamoService)
+        {
+            _prestamoService = prestamoService;
+        }
+
+        // GET api/prestamos?pageIndex=1&pageSize=20
+        [HttpGet]
+        public IActionResult GetPendientes(int pageIndex = 1, int pageSize = 20)
+        {
+            var (items, _) = _prestamoService.ObtenerPaginado(pageIndex, pageSize);
+            var pendientes = items.Where(p => p.FechaDevolucionReal == null).ToList();
+            return Ok(new { total = pendientes.Count, items = pendientes });
+        }
+
+        // POST api/prestamos/5/devolucion
+        [HttpPost("{id}/devolucion")]
+        public IActionResult RegistrarDevolucion(int id)
+        {
+            var prestamo = _prestamoService.ObtenerPorId(id);
+            if (prestamo == null) return NotFound();
+
+            try
+            {
+                _prestamoService.RegistrarDevolucion(id);
+                return Ok(new { mensaje = "Devolución registrada" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // GET api/prestamos/vencidos
+        [HttpGet("vencidos")]
+        public IActionResult GetVencidos()
+        {
+            var vencidos = _prestamoService.ObtenerVencidos();
+            return Ok(new { total = vencidos.Count, items = vencidos });
+        }
+    }
+
+
+    [ApiController]
+    [Route("api/solicitudes")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "TecnicoOAdmin")]
+    public class SolicitudesApiController : ControllerBase
+    {
+        private readonly ISolicitudService _solicitudService;
+
+        public SolicitudesApiController(ISolicitudService solicitudService)
+        {
+            _solicitudService = solicitudService;
+        }
+
+        // GET api/solicitudes?pageIndex=1&pageSize=20
+        [HttpGet]
+        public IActionResult GetPendientes(int pageIndex = 1, int pageSize = 20)
+        {
+            var (items, total) = _solicitudService.ObtenerPaginado(pageIndex, pageSize, "Pendiente");
+            return Ok(new { total, items });
+        }
+
+        [HttpPost("{id}/aprobar")]
+        public IActionResult Aprobar(int id) => CambiarEstado(id, "Aprobada");
+
+        [HttpPost("{id}/rechazar")]
+        public IActionResult Rechazar(int id) => CambiarEstado(id, "Rechazada");
+
+        private IActionResult CambiarEstado(int id, string nuevoEstado)
+        {
+            var solicitud = _solicitudService.ObtenerPorId(id);
+            if (solicitud == null) return NotFound();
+
+            try
+            {
+                _solicitudService.CambiarEstado(id, nuevoEstado);
+                return Ok(new { mensaje = $"Solicitud cambiada a '{nuevoEstado}'" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+    }
+    
 }

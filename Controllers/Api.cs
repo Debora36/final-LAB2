@@ -140,9 +140,6 @@ namespace final_LAB2.Controllers.Api
             return Ok(new { total, items });
         }
 
-        [HttpPost("{id}/aprobar")]
-        public IActionResult Aprobar(int id) => CambiarEstado(id, "Aprobada");
-
         [HttpPost("{id}/rechazar")]
         public IActionResult Rechazar(int id) => CambiarEstado(id, "Rechazada");
 

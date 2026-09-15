@@ -64,14 +64,6 @@ Todos los endpoints, salvo el login, requieren el header:
 - **Respuesta:** `{ total, items }` (lista de `Solicitud`)
 - **Descripción:** Devuelve las solicitudes en estado `Pendiente`.
 
-### Aprobar solicitud
-
-- **Método:** `POST`
-- **Ruta:** `/api/solicitudes/{id}/aprobar`
-- **Headers:** `Authorization: Bearer <token>`
-- **Cuerpo:** ninguno
-- **Respuesta:** `{ mensaje }` (200) / `{ error }` (400 si no estaba Pendiente) / 404 si no existe
-- **Descripción:** Cambia el estado de la solicitud a `Aprobada`. Solo se permite si estaba en estado `Pendiente`.
 
 ### Rechazar solicitud
 

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using final_LAB2.Models;
-using MySqlConnector;
 using final_LAB2.Services.Interfaces;
 using final_LAB2.Models.ViewModels;
 using System.Security.Claims;
@@ -40,32 +39,23 @@ public class HomeController : Controller
 
             if (User.IsInRole("Empleado"))
             {
-                var empleadoIdStr = User.FindFirstValue("EmpleadoId");
-                if (string.IsNullOrEmpty(empleadoIdStr))
+                var empleadoId = ObtenerEmpleadoIdLogueado();
+                if (empleadoId == null)
                     return View(new PaginatedListViewModel<PrestamoViewModel>());
 
-                var empleadoId = int.Parse(empleadoIdStr);
-                (prestamos, totalCount) = _prestamoService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId);
+                (prestamos, totalCount) = _prestamoService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId.Value);
             }
             else
             {
-                // Admin y Tecnico
                 if (!string.IsNullOrWhiteSpace(dni))
                     (prestamos, totalCount) = _prestamoService.ObtenerPaginadoPorDni(pageIndex, PageSize, dni);
                 else
                     (prestamos, totalCount) = _prestamoService.ObtenerPaginado(pageIndex, PageSize, estado);
             }
 
-            var listaViewModel = prestamos.Select(p => new PrestamoViewModel
-            {
-                Prestamo = p,
-                Empleado = _empleadoService.ObtenerPorId(p.EmpleadoId)!,
-                Equipo = _equipoService.ObtenerPorId(p.EquipoId)!
-            }).ToList();
-
             var modelo = new PaginatedListViewModel<PrestamoViewModel>
             {
-                Items = listaViewModel,
+                Items = MapearAPrestamoViewModel(prestamos),
                 PageIndex = pageIndex,
                 PageSize = PageSize,
                 TotalCount = totalCount
@@ -106,9 +96,28 @@ public class HomeController : Controller
             }
         }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+
+    //MÉTODOS PRIVADOS AUXILIARES
+
+        private int? ObtenerEmpleadoIdLogueado()
+        {
+            var empleadoIdStr = User.FindFirstValue("EmpleadoId");
+            return int.TryParse(empleadoIdStr, out var empleadoId) ? empleadoId : null;
+        }
+
+    private List<PrestamoViewModel> MapearAPrestamoViewModel(List<Prestamo> prestamos)
+        {
+            return prestamos.Select(p => new PrestamoViewModel
+            {
+                Prestamo = p,
+                Empleado = _empleadoService.ObtenerPorId(p.EmpleadoId)!,
+                Equipo = _equipoService.ObtenerPorId(p.EquipoId)!
+            }).ToList();
+        }
 }

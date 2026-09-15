@@ -2,7 +2,18 @@ body {
     display: flex;
     flex-direction: column;
 }
-
+    /* mientras todavía no terminó de "compilar",
+       el navegador oculta el elemento hasta que se saca el atributo v-cloak (al montar). */
+    [v-cloak] {
+        display: none;
+    }
+        /* Transición simple de aparecer/desaparecer para las alertas de error/éxito */
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity 0.3s ease;
+    }
+    .fade-enter-from, .fade-leave-to {
+        opacity: 0;
+    }
 .modern-navbar {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     padding: 0.75rem 0;
@@ -796,4 +807,5 @@ body {
     .table-actions .btn {
         width: 100%;
     }
+
 }

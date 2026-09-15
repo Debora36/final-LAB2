@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace final_LAB2.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Tecnico")]
     public class CategoriaController : Controller
     {
         private readonly ICategoriaService _categoriaService;
@@ -15,6 +15,7 @@ namespace final_LAB2.Controllers
             _categoriaService = categoriaService;
         }
 
+        [Authorize(Roles = "Admin")]
         public IActionResult Index()
         {
             return View();
@@ -34,25 +35,9 @@ namespace final_LAB2.Controllers
             }
         }
 
-        // Búsqueda ajax reutilizada por el filtro de Equipo y por el selector de categoría en su ABM
-        [HttpGet]
-        [Authorize]
-        public IActionResult Buscar(string termino = "", int max = 10)
-        {
-            try
-            {
-                var categorias = _categoriaService.Buscar(termino, max);
-                return Json(categorias);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
 
         // Lista paginada para el filtro de Equipo
         [HttpGet]
-        [Authorize]
         public IActionResult ListarParaSeleccion(int pagina = 1)
         {
             const int tamPagina = 3;
@@ -65,6 +50,7 @@ namespace final_LAB2.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Crear([FromBody] Categoria categoria)
         {
@@ -83,6 +69,7 @@ namespace final_LAB2.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Actualizar(int id, [FromBody] Categoria categoria)
         {
@@ -104,6 +91,7 @@ namespace final_LAB2.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
         {
@@ -115,6 +103,10 @@ namespace final_LAB2.Controllers
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }

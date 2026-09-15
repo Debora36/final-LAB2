@@ -217,7 +217,7 @@
         </div>
     </div>
 </div>
-<!-- Modal Aprobar — uno por solicitud -->
+<!-- Modal Aprobar -->
 @foreach (var item in Model.Items)
 {
     @if (item.Solicitud.Estado == "Pendiente" && (User.IsInRole("Admin") || User.IsInRole("Tecnico")))
@@ -283,7 +283,6 @@
     <script>
         document.addEventListener('show.bs.modal', function (event) {
             const modal = event.target;
-            console.log('modal id:', modal.id);
 
             if (!modal.id.startsWith('modalAprobar')) return;
 
@@ -295,14 +294,14 @@
 
             if (!select) return;
 
-            if ($(select).data('select2')) {
+            if ($(select).data('select2')) {//si ya estaba inicializado lo reinicializo para que tome la nueva categoría
                 $(select).select2('destroy');
             }
 
             $(select).select2({
             dropdownParent: $(modal),
             placeholder: 'Buscar equipo por modelo o número de serie...',
-            minimumInputLength: 0,
+            minimumInputLength: 0,//minimo de caracteres para buscar
             language: {
                 inputTooShort: () => 'Escribí para buscar...',
                 noResults: () => 'No hay equipos disponibles para esta categoría',
@@ -312,14 +311,14 @@
                 url: '/Equipo/BuscarDisponibles',
                 dataType: 'json',
                 delay: 250,
-                data: function (params) {
+                data: function (params) {//se envían los parámetros de búsqueda al servidor y la categoría seleccionada
                     return {
                         q: params.term,
                         categoriaId: categoriaId
                     };
                 },
                 processResults: function (data) {
-                    return { results: data.results ?? [] };
+                    return { results: data.results ?? [] };//si no hay resultados se devuelve un array vacío
                 },
                 error: function () {
                     const contenedor = modal.querySelector('.sin-equipos');

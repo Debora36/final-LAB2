@@ -111,28 +111,6 @@ namespace final_LAB2.Repository
             return Convert.ToInt32(command.ExecuteScalar());
         }
 
-        public List<Categoria> Buscar(string termino, int maxResultados = 10)
-        {
-            var categorias = new List<Categoria>();
-            using var connection = new MySqlConnection(connectionString);
-            connection.Open();
-
-            const string query = @"SELECT Id, Nombre, Descripcion FROM CATEGORIA
-                                    WHERE Nombre LIKE @Termino
-                                    ORDER BY Nombre
-                                    LIMIT @Max";
-            using var command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@Termino", $"%{termino}%");
-            command.Parameters.AddWithValue("@Max", maxResultados);
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                categorias.Add(MapearCategoria(reader));
-            }
-            return categorias;
-        }
-
         public bool EstaEnUso(int id)
         {
             using var connection = new MySqlConnection(connectionString);

@@ -7,7 +7,7 @@ namespace final_LAB2.Services.Interfaces
         Equipo? ObtenerPorId(int id);
         (List<Equipo> Items, int TotalCount) ObtenerPaginado(int pageIndex, int pageSize, string? estado, int? categoriaId);
         void Crear(Equipo equipo);   // lanza InvalidOperationException si el número de serie ya existe
-        void Actualizar(Equipo equipo);
+        void Actualizar(Equipo equipo, string? nuevaRutaGarantia = null, bool eliminarGarantia = false);
         void DarDeBaja(int id);
         List<Equipo> ObtenerPorEstado(string estado);
         List<Equipo> BuscarDisponibles(string? termino, int categoriaId);

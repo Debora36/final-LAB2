@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using final_LAB2.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +14,7 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Exige login en toda la app; las acciones con [AllowAnonymous] quedan exceptuadas
     options.Filters.Add(new AuthorizeFilter());
+    options.Filters.Add<GlobalExceptionFilter>();
 });
 
 
@@ -35,6 +36,8 @@ builder.Services.AddScoped<ISolicitudService, SolicitudService>();
 builder.Services.AddScoped<IPrestamoRepository, PrestamoRepository>();
 builder.Services.AddScoped<IPrestamoService, PrestamoService>();
 
+builder.Services.AddScoped<IFileService, FileService>();
+
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -48,7 +51,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
     })
-    .AddJwtBearer(options =>  // ← se encadena acá
+    .AddJwtBearer(options =>//la uso para la autenticación de la API
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {

@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace final_LAB2.Controllers
 {
-    [Authorize(Roles = "Admin,Tecnico,Empleado")]// Admin/Tecnico ven todo — Empleado ve solo las suyas
+    [Authorize(Roles = "Admin,Tecnico,Empleado")]
     public class SolicitudController : Controller
     {
         private const int PageSize = 10;
@@ -25,66 +25,40 @@ namespace final_LAB2.Controllers
         }
 
         public IActionResult Index(int pageIndex = 1, string? estado = null)
-    {
-        if (pageIndex < 1) pageIndex = 1;
+        {
+            if (pageIndex < 1) pageIndex = 1;
 
-        List<Solicitud> items;
-        int totalCount;
-        if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
-        {
-            ViewBag.EquiposDisponibles = _equipoService.ObtenerPorEstado("Disponible");
-        }
-        if (User.IsInRole("Empleado"))
-        {
-            var empleadoIdStr = User.FindFirstValue("EmpleadoId");
-            if (string.IsNullOrEmpty(empleadoIdStr))
+            List<Solicitud> items;
+            int totalCount;
+
+            if (User.IsInRole("Admin") || User.IsInRole("Tecnico"))
             {
-                TempData["ErrorMessage"] = "No se encontró el empleado asociado a su sesión. Vuelva a iniciar sesión.";
-                return RedirectToAction("Index", "Home");
+                (items, totalCount) = _solicitudService.ObtenerPaginado(pageIndex, PageSize, estado);
             }
-            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
-            (items, totalCount) = _solicitudService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId, estado);
-            ViewBag.Categorias = _categoriaService.ObtenerTodos();
-        }
-        else
-        {
-            (items, totalCount) = _solicitudService.ObtenerPaginado(pageIndex, PageSize, estado);
-        }
-
-        var listaViewModel = new List<SolicitudViewModel>();
-        foreach (var solicitud in items)
-        {
-            listaViewModel.Add(new SolicitudViewModel
+            else // Rol Empleado
             {
-                Solicitud = solicitud,
-                Empleado = _empleadoService.ObtenerPorId(solicitud.EmpleadoId)!,
-                Categoria = _categoriaService.ObtenerPorId(solicitud.CategoriaId)!
-            });
-        }
-        var modelo = new PaginatedListViewModel<SolicitudViewModel>
-        {
-            Items = listaViewModel,
-            PageIndex = pageIndex,
-            PageSize = PageSize,
-            TotalCount = totalCount
-        };
+                var empleadoId = ObtenerEmpleadoIdLogueado();
+                if (empleadoId == null)
+                {
+                    TempData["ErrorMessage"] = "No se encontró el empleado asociado a su sesión. Vuelva a iniciar sesión.";
+                    return RedirectToAction("Index", "Home");
+                }
 
-        ViewBag.EstadoActual = estado;
-        return View(modelo);
-    }
-
-        [HttpGet]
-        public IActionResult Detalle(int id)
-        {
-            var solicitud = _solicitudService.ObtenerPorId(id);
-            if (solicitud == null)
-            {
-                TempData["ErrorMessage"] = "Solicitud no encontrada.";
-                return RedirectToAction(nameof(Index));
+                (items, totalCount) = _solicitudService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId.Value, estado);
             }
 
-            return View(solicitud);
+            var modelo = new PaginatedListViewModel<SolicitudViewModel>
+            {
+                Items = MapearAViewModel(items),
+                PageIndex = pageIndex,
+                PageSize = PageSize,
+                TotalCount = totalCount
+            };
+
+            ViewBag.EstadoActual = estado;
+            return View(modelo);
         }
+
 
         [Authorize(Roles = "Empleado")]
         [HttpGet]
@@ -94,18 +68,19 @@ namespace final_LAB2.Controllers
             return View();
         }
 
-       [Authorize(Roles = "Empleado")]
+        [Authorize(Roles = "Empleado")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Solicitud solicitud)
         {
-            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
-            solicitud.EmpleadoId = empleadoId;
+            var empleadoId = ObtenerEmpleadoIdLogueado();
+            if (empleadoId == null) return RedirectToAction("Index", "Home");
+
+            solicitud.EmpleadoId = empleadoId.Value;
             ModelState.Remove(nameof(solicitud.EmpleadoId));
 
             if (!ModelState.IsValid)
             {
-                // Ahora volvemos a la vista Create, no al Index
                 ViewBag.Categorias = _categoriaService.ObtenerTodos();
                 return View(solicitud);
             }
@@ -150,8 +125,7 @@ namespace final_LAB2.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Editar(int id, Solicitud solicitud)
         {
-            if (id != solicitud.Id)
-                return NotFound();
+            if (id != solicitud.Id) return NotFound();
 
             if (!ModelState.IsValid)
             {
@@ -167,32 +141,20 @@ namespace final_LAB2.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, ex.Message);
+                ViewBag.Categorias = _categoriaService.ObtenerTodos();
+                return View(solicitud);
             }
         }
-
+        //para aprobar y rechazar solicitud
         [Authorize(Roles = "Admin,Tecnico")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult CambiarEstado(int id, string nuevoEstado)
         {
-            var estadosValidos = new[] { "Pendiente", "Aprobada", "Rechazada" };
-            if (!estadosValidos.Contains(nuevoEstado))
-            {
-                TempData["ErrorMessage"] = "Estado no válido.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            try
-            {
-                _solicitudService.CambiarEstado(id, nuevoEstado);
-                TempData["SuccessMessage"] = $"Estado cambiado a '{nuevoEstado}' correctamente.";
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-            }
+            // El servicio se encarga de validar si el estado es válido y si la solicitud está pendiente
+            _solicitudService.CambiarEstado(id, nuevoEstado);
+            TempData["SuccessMessage"] = $"Estado cambiado a '{nuevoEstado}' correctamente.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -202,40 +164,50 @@ namespace final_LAB2.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
         {
-            var empleadoId = int.Parse(User.FindFirstValue("EmpleadoId")!);
-            var solicitud = _solicitudService.ObtenerPorId(id);
+            var empleadoId = ObtenerEmpleadoIdLogueado();
+            if (empleadoId == null) return RedirectToAction("Index", "Home");
 
-            if (solicitud == null)
-            {
-                TempData["ErrorMessage"] = "Solicitud no encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Verificamos que la solicitud pertenezca al empleado logueado
-            if (solicitud.EmpleadoId != empleadoId)
-            {
-                TempData["ErrorMessage"] = "No tenés permiso para eliminar esta solicitud.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (solicitud.Estado != "Pendiente")
-            {
-                TempData["ErrorMessage"] = "Solo se pueden eliminar solicitudes en estado Pendiente.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            _solicitudService.Eliminar(id);
+            // Delegamos toda la lógica de permisos y validación de estado al servicio
+            _solicitudService.Eliminar(id, empleadoId.Value);
             TempData["SuccessMessage"] = "Solicitud eliminada correctamente.";
+            
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "Admin,Tecnico")]
+        //desde lista de Empleados, ver solicitudes (siendo admin)
+        [Authorize(Roles = "Admin")]
         public IActionResult PorEmpleado(int empleadoId, int pageIndex = 1, string? estado = null)
         {
             if (pageIndex < 1) pageIndex = 1;
 
             var (solicitudes, totalCount) = _solicitudService.ObtenerPaginadoPorEmpleado(pageIndex, PageSize, empleadoId, estado);
 
+            var modelo = new PaginatedListViewModel<SolicitudViewModel>
+            {
+                Items = MapearAViewModel(solicitudes),
+                PageIndex = pageIndex,
+                PageSize = PageSize,
+                TotalCount = totalCount
+            };
+
+            var empleado = _empleadoService.ObtenerPorId(empleadoId);
+            ViewBag.EmpleadoNombre = empleado != null ? $"{empleado.Nombre} {empleado.Apellido}" : "Empleado";
+            ViewBag.EmpleadoId = empleadoId;
+            ViewBag.EstadoActual = estado;
+
+            return View(modelo);
+        }
+
+        // --- MÉTODOS PRIVADOS AUXILIARES ---
+
+        private int? ObtenerEmpleadoIdLogueado()
+        {
+            var empleadoIdStr = User.FindFirstValue("EmpleadoId");
+            return int.TryParse(empleadoIdStr, out var empleadoId) ? empleadoId : null;
+        }
+
+        private List<SolicitudViewModel> MapearAViewModel(List<Solicitud> solicitudes)
+        {
             var listaViewModel = new List<SolicitudViewModel>();
             foreach (var solicitud in solicitudes)
             {
@@ -246,22 +218,7 @@ namespace final_LAB2.Controllers
                     Categoria = _categoriaService.ObtenerPorId(solicitud.CategoriaId)!
                 });
             }
-
-            var modelo = new PaginatedListViewModel<SolicitudViewModel>
-            {
-                Items = listaViewModel,
-                PageIndex = pageIndex,
-                PageSize = PageSize,
-                TotalCount = totalCount
-            };
-
-            // Para mostrar el nombre del empleado en el título de la vista
-            var empleado = _empleadoService.ObtenerPorId(empleadoId);
-            ViewBag.EmpleadoNombre = empleado != null ? $"{empleado.Nombre} {empleado.Apellido}" : "Empleado";
-            ViewBag.EmpleadoId = empleadoId;
-            ViewBag.EstadoActual = estado;
-
-            return View(modelo);
+            return listaViewModel;
         }
     }
 }

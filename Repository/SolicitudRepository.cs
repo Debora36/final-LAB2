@@ -143,7 +143,7 @@ namespace final_LAB2.Repository
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
 
-            // Armamos el WHERE dinámicamente según si hay filtro de estado o no
+            // WHERE según si hay filtro de estado o no
             var whereEstado = estado != null ? "AND Estado = @Estado" : "";
 
             var query = $@"SELECT Id, EmpleadoId, CategoriaId, Motivo, TiempoNecesario, FechaSolicitud, Estado

@@ -14,11 +14,13 @@ namespace final_LAB2.Controllers
         private const int PageSize = 10;
         private readonly IUsuarioService _usuarioService;
         private readonly IEmpleadoService _empleadoService;
+        private readonly IFileService _fileService;
 
-        public UsuarioController(IUsuarioService usuarioService, IEmpleadoService empleadoService)
+        public UsuarioController(IUsuarioService usuarioService, IEmpleadoService empleadoService, IFileService fileService)
         {
             _usuarioService = usuarioService;
             _empleadoService = empleadoService;
+            _fileService = fileService;
         }
 
         [Authorize(Roles = "Admin")]
@@ -111,11 +113,10 @@ namespace final_LAB2.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Usuario usuario, string? nuevaPassword,
-                          string? confirmarPassword, IFormFile? archivoAvatar,
-                          [FromServices] IWebHostEnvironment environment)
+                        string? confirmarPassword, IFormFile? archivoAvatar)
         {
             var usuarioLogueadoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            bool desdePerfil = id == usuarioLogueadoId; // Si el usuario está editando su propio perfil, se considera "desdePerfil"
+            bool desdePerfil = id == usuarioLogueadoId;
 
             if (!User.IsInRole("Admin") && id != usuarioLogueadoId)
             {
@@ -136,82 +137,35 @@ namespace final_LAB2.Controllers
                 return View(usuario);
             }
 
-            var usuarioActual = _usuarioService.ObtenerPorId(id);
-            if (usuarioActual == null)
+            try
             {
-                TempData["ErrorMessage"] = "Usuario no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            usuario.Activo = usuarioActual.Activo;
-            usuario.Password = usuarioActual.Password;
-
-            // Subir avatar si se seleccionó uno
-            if (archivoAvatar != null && archivoAvatar.Length > 0)
-            {
-                var carpeta = Path.Combine(environment.WebRootPath, "Uploads", "Avatars");
-                if (!Directory.Exists(carpeta))
-                    Directory.CreateDirectory(carpeta);
-
-                var nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(archivoAvatar.FileName);
-                var rutaFisica = Path.Combine(carpeta, nombreArchivo);
-
-                using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                string? nuevoAvatarUrl = null;
+                
+                // delego la tarea de los archivos
+                if (archivoAvatar != null && archivoAvatar.Length > 0)
                 {
-                    archivoAvatar.CopyTo(stream);
+                    var usuarioOriginal = _usuarioService.ObtenerPorId(id);
+                    if (usuarioOriginal != null)
+                    {
+                        _fileService.EliminarArchivo(usuarioOriginal.AvatarUrl);
+                    }
+                    nuevoAvatarUrl = _fileService.GuardarArchivo(archivoAvatar, "Avatars");
                 }
 
-                // Eliminar avatar anterior si tenía uno
-                if (!string.IsNullOrWhiteSpace(usuarioActual.AvatarUrl))
-                {
-                    var rutaAnterior = Path.Combine(environment.WebRootPath,
-                        usuarioActual.AvatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                    if (System.IO.File.Exists(rutaAnterior))
-                        System.IO.File.Delete(rutaAnterior);
-                }
+                _usuarioService.ActualizarDatos(usuario, nuevoAvatarUrl);
 
-                usuario.AvatarUrl = $"/Uploads/Avatars/{nombreArchivo}";
+                if (desdePerfil && !string.IsNullOrEmpty(nuevaPassword))
+                    _usuarioService.CambiarPassword(id, nuevaPassword);
+
+                TempData["SuccessMessage"] = "Usuario actualizado correctamente.";
+                return desdePerfil ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Index));
             }
-            else
+            catch (InvalidOperationException ex)
             {
-                // Si no subió nada, mantener el avatar actual
-                usuario.AvatarUrl = usuarioActual.AvatarUrl;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                ViewBag.DesdePerfil = desdePerfil;
+                return View(usuario);
             }
-            _usuarioService.ActualizarDatos(usuario);
-
-            // Solo renovamos la cookie si el usuario editó su propio perfil
-            if (id == usuarioLogueadoId)
-            {
-                var usuarioActualizado = _usuarioService.ObtenerPorId(id);
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuarioActualizado!.Id.ToString()),
-                    new Claim(ClaimTypes.Name, usuarioActualizado.Username),
-                    new Claim(ClaimTypes.Email, usuarioActualizado.Email),
-                    new Claim(ClaimTypes.Role, usuarioActualizado.Rol)
-                };
-
-                if (!string.IsNullOrWhiteSpace(usuarioActualizado.AvatarUrl))
-                    claims.Add(new Claim("AvatarUrl", usuarioActualizado.AvatarUrl));
-
-                var empleado = _empleadoService.ObtenerPorUsuarioId(usuarioActualizado.Id);
-                if (empleado != null)
-                    claims.Add(new Claim("EmpleadoId", empleado.Id.ToString()));
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity));
-            }
-
-            if (desdePerfil && !string.IsNullOrEmpty(nuevaPassword))
-                _usuarioService.CambiarPassword(id, nuevaPassword);
-
-            TempData["SuccessMessage"] = "Usuario actualizado correctamente.";
-
-            return desdePerfil
-                ? RedirectToAction("Index", "Home")
-                : RedirectToAction(nameof(Index));
         }
 
     }

@@ -84,18 +84,7 @@ namespace final_LAB2.Controllers
                 ViewBag.UsuariosElegibles = _empleadoService.ObtenerUsuariosElegibles(empleado.UsuarioId ?? 0);
                 return View(empleado);
             }
-
-            var empleadoActual = _empleadoService.ObtenerPorId(id);
-            if (empleadoActual == null)
-            {
-                TempData["ErrorMessage"] = "Empleado no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Activo se maneja únicamente desde Disable, nunca desde este formulario
-            empleado.Activo = empleadoActual.Activo;
             _empleadoService.Actualizar(empleado);
-
             TempData["SuccessMessage"] = "Empleado actualizado correctamente.";
             return RedirectToAction(nameof(Index));
         }

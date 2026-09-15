@@ -53,27 +53,28 @@ namespace final_LAB2.Repository
             var equipos = new List<Equipo>();
             using var connection = new MySqlConnection(connectionString);
             connection.Open();
- 
+            // Obtengo los filtros generados por el método auxiliar
             var (whereClause, parametros) = ArmarFiltro(estado, categoriaId);
  
             var query = new StringBuilder(@"SELECT e.Id, e.Modelo, e.NumeroSerie, e.Estado, e.RutaArchivoGarantia, e.CategoriaId, c.Nombre AS CategoriaNombre
                                               FROM EQUIPO e
                                               JOIN CATEGORIA c ON c.Id = e.CategoriaId");
-            query.Append(whereClause);
+            query.Append(whereClause);//Inyecto la cláusula WHERE
             query.Append(" ORDER BY e.Modelo LIMIT @PageSize OFFSET @Offset");
  
             using var command = new MySqlCommand(query.ToString(), connection);
+            // Asigno los parámetros dinámicos de los filtros
             foreach (var p in parametros)
             {
                 command.Parameters.AddWithValue(p.Key, p.Value);
             }
             command.Parameters.AddWithValue("@PageSize", pageSize);
             command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
- 
+
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                equipos.Add(MapearEquipo(reader));
+                equipos.Add(MapearEquipo(reader));//mapeo cada registro obtenido al modelo de dominio
             }
             return equipos;
         }
@@ -163,10 +164,10 @@ namespace final_LAB2.Repository
             var condiciones = new List<string>();
             var parametros = new Dictionary<string, object>();
  
-            if (!string.IsNullOrWhiteSpace(estado))
+            if (!string.IsNullOrWhiteSpace(estado))//si hay estado
             {
-                condiciones.Add("e.Estado = @Estado");
-                parametros["@Estado"] = estado;
+                condiciones.Add("e.Estado = @Estado");//agrego la condicion
+                parametros["@Estado"] = estado;//agrego el parametro
             }
  
             if (categoriaId.HasValue)
@@ -174,7 +175,7 @@ namespace final_LAB2.Repository
                 condiciones.Add("e.CategoriaId = @CategoriaId");
                 parametros["@CategoriaId"] = categoriaId.Value;
             }
- 
+            // Si ya hay filtros se unen con AND; de lo contrario, devuelve una cadena vacía
             var whereClause = condiciones.Count > 0 ? " WHERE " + string.Join(" AND ", condiciones) : "";
             return (whereClause, parametros);
         }
@@ -232,7 +233,7 @@ namespace final_LAB2.Repository
                         AND e.CategoriaId = @CategoriaId
                         {wheretermino}
                         ORDER BY e.Modelo
-                        LIMIT 10";
+                        LIMIT 3";//le pongo 3 para probar, luego se puede cambiar a 10 o lo que se quiera
 
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@CategoriaId", categoriaId);

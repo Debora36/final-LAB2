@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using final_LAB2.Models.ViewModels;
  
 namespace final_LAB2.Controllers
 {
@@ -66,11 +66,11 @@ namespace final_LAB2.Controllers
                 claims.Add(new Claim("EmpleadoId", empleado.Id.ToString()));
             }
  
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);//se crea la identidad de claims para el usuario autenticado
+            var authProperties = new AuthenticationProperties //configuración de la cookie de autenticación
             {
                 IsPersistent = model.RememberMe,
-                ExpiresUtc = model.RememberMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(8)
+                ExpiresUtc = model.RememberMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(3)//si el usuario selecciona "Recordarme", la cookie expira en 30 días, sino en 3 horas
             };
  
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
@@ -86,7 +86,7 @@ namespace final_LAB2.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);//cierra la sesión del usuario y elimina la cookie de autenticación
             return RedirectToAction("Login");
         }
  
@@ -95,20 +95,5 @@ namespace final_LAB2.Controllers
         {
             return View();
         }
-    }
- 
-    public class LoginViewModel
-    {
-        [Required(ErrorMessage = "El nombre de usuario es requerido")]
-        [StringLength(50, ErrorMessage = "El nombre de usuario no puede exceder los 50 caracteres")]
-        public string Username { get; set; } = string.Empty;
- 
-        [Required(ErrorMessage = "La contraseña es requerida")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 100 caracteres")]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
- 
-        [Display(Name = "Recordarme")]
-        public bool RememberMe { get; set; }
     }
 }

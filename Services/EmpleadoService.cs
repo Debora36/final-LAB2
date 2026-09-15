@@ -38,7 +38,22 @@ namespace final_LAB2.Services
             _empleadoRepository.Agregar(empleado);
         }
 
-        public void Actualizar(Empleado empleado) => _empleadoRepository.Actualizar(empleado);
+        public void Actualizar(Empleado empleado)
+        {
+            var empleadoActual = _empleadoRepository.ObtenerPorId(empleado.Id);
+            
+            if (empleadoActual == null)
+            {
+                throw new InvalidOperationException("Empleado no encontrado.");
+            }
+
+            empleadoActual.UsuarioId = empleado.UsuarioId; 
+            empleadoActual.Nombre = empleado.Nombre;
+            empleadoActual.Apellido = empleado.Apellido;
+            empleadoActual.DNI = empleado.DNI;
+            
+            _empleadoRepository.Actualizar(empleadoActual);
+        }
 
         public void Desactivar(int id) => _empleadoRepository.Desactivar(id);
         

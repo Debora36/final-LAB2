@@ -11,5 +11,6 @@ namespace final_LAB2.Services.Interfaces
         (List<Prestamo> Items, int TotalCount) ObtenerPaginadoPorDni(int pageIndex, int pageSize, string dni);
         (List<Prestamo> Items, int TotalCount) ObtenerPaginadoPorEmpleado(int pageIndex, int pageSize, int empleadoId);
         List<Prestamo> ObtenerVencidos();
+        void AprobarSolicitud(int solicitudId, int equipoId, DateTime? fechaDevolucionEstimada);
     }
 }

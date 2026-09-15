@@ -65,9 +65,14 @@ namespace final_LAB2.Services
 
         public void CambiarEstado(int id, string nuevoEstado)
         {
+            var estadosValidos = new[] { "Pendiente", "Aprobada", "Rechazada" };
+            if (!estadosValidos.Contains(nuevoEstado))
+                throw new ArgumentException("Estado no válido.");
+
             var solicitud = _solicitudRepository.ObtenerPorId(id);
             if (solicitud == null)
                 throw new InvalidOperationException("La solicitud especificada no existe.");
+                
             if (solicitud.Estado != "Pendiente")
                 throw new InvalidOperationException($"No se puede cambiar el estado: la solicitud ya está '{solicitud.Estado}'.");
 
@@ -83,8 +88,18 @@ namespace final_LAB2.Services
             return (items, totalCount);
         }
 
-        public void Eliminar(int id)
+        public void Eliminar(int id, int empleadoId)
         {
+            var solicitud = _solicitudRepository.ObtenerPorId(id);
+            if (solicitud == null)
+                throw new InvalidOperationException("Solicitud no encontrada.");
+
+            if (solicitud.EmpleadoId != empleadoId)
+                throw new InvalidOperationException("No tenés permiso para eliminar esta solicitud.");
+
+            if (solicitud.Estado != "Pendiente")
+                throw new InvalidOperationException("Solo se pueden eliminar solicitudes en estado Pendiente.");
+
             _solicitudRepository.Eliminar(id);
         }
     }

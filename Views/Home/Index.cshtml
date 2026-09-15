@@ -76,7 +76,7 @@
                         }
 
                     </div>
-                     @if (Model.TotalCount > 0)
+                    @if (Model.TotalCount > 0)
                     {
                         <p class="text-muted mb-3" id="contadorRegistros">
                             Mostrando <strong>@((Model.PageIndex - 1) * Model.PageSize + 1)</strong> a
@@ -248,27 +248,27 @@
                     data.items.forEach(item => {
                         const devuelto = item.devuelto;
                         tbody.innerHTML += `
-                                    <tr>
-                                        <td><strong>${item.empleado.nombre} ${item.empleado.apellido}</strong></td>
-                                        <td>${item.empleado.dni}</td>
-                                        <td>${item.equipo.categoriaNombre}</td>
-                                        <td>${item.equipo.modelo}</td>
-                                        <td>${item.fechaPrestamo}</td>
-                                        <td>${item.fechaDevolucionEstimada ?? '<span class="text-muted fst-italic">Sin fecha</span>'}</td>
-                                        <td>${devuelto
+                                            <tr>
+                                                <td><strong>${item.empleado.nombre} ${item.empleado.apellido}</strong></td>
+                                                <td>${item.empleado.dni}</td>
+                                                <td>${item.equipo.categoriaNombre}</td>
+                                                <td>${item.equipo.modelo}</td>
+                                                <td>${item.fechaPrestamo}</td>
+                                                <td>${item.fechaDevolucionEstimada ?? '<span class="text-muted fst-italic">Sin fecha</span>'}</td>
+                                                <td>${devuelto
                                 ? `<span class="badge bg-success">${item.fechaDevolucionReal}</span>`
                                 : '<span class="badge bg-warning text-dark">Pendiente</span>'}</td>
-                                        <td class="text-center">
-                                            ${!devuelto ? `
-                                                <form action="/Prestamo/RegistrarDevolucion/${item.id}" method="post" class="d-inline"
-                                                      onsubmit="return confirm('¿Registrar devolución?');">
-                                                    <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value ?? ''}" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-success">
-                                                        <i class="fas fa-undo me-1"></i>Devolución
-                                                    </button>
-                                                </form>` : '<span class="text-muted fst-italic">Devuelto</span>'}
-                                        </td>
-                                    </tr>`;
+                                                <td class="text-center">
+                                                    ${!devuelto ? `
+                                                        <form action="/Prestamo/RegistrarDevolucion/${item.id}" method="post" class="d-inline"
+                                                              onsubmit="return confirm('¿Registrar devolución?');">
+                                                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value ?? ''}" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                                <i class="fas fa-undo me-1"></i>Devolución
+                                                            </button>
+                                                        </form>` : '<span class="text-muted fst-italic">Devuelto</span>'}
+                                                </td>
+                                            </tr>`;
                     });
 
                     // Ocultamos la paginación durante la búsqueda AJAX

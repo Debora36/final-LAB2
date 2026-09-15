@@ -31,13 +31,34 @@ namespace final_LAB2.Services
             _equipoRepository.Agregar(equipo);
         }
 
-        public void Actualizar(Equipo equipo)
+        public void Actualizar(Equipo equipo, string? nuevaRutaGarantia = null, bool eliminarGarantia = false)
         {
+            var equipoActual = _equipoRepository.ObtenerPorId(equipo.Id);
+            if (equipoActual == null)
+            {
+                throw new InvalidOperationException("Equipo no encontrado.");
+            }
+
             if (_equipoRepository.NumeroSerieExiste(equipo.NumeroSerie, equipo.Id))
             {
                 throw new InvalidOperationException("Ya existe otro equipo con ese número de serie.");
             }
-            _equipoRepository.Actualizar(equipo);
+
+            equipoActual.Modelo = equipo.Modelo;
+            equipoActual.NumeroSerie = equipo.NumeroSerie;
+            equipoActual.CategoriaId = equipo.CategoriaId;
+            equipoActual.Estado = equipo.Estado;
+
+            if (nuevaRutaGarantia != null)
+            {
+                equipoActual.RutaArchivoGarantia = nuevaRutaGarantia;
+            }
+            else if (eliminarGarantia)
+            {
+                equipoActual.RutaArchivoGarantia = null;
+            }
+
+            _equipoRepository.Actualizar(equipoActual);
         }
 
         public void DarDeBaja(int id) => _equipoRepository.DarDeBaja(id);

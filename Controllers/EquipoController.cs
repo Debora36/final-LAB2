@@ -6,19 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace final_LAB2.Controllers
 {
-    // Solo Admin y Tecnico gestionan equipos. El Empleado tiene su propia vista
-    // (solicitar préstamo / devolver) que se arma aparte, no reutiliza este controller.
     [Authorize(Roles = "Admin,Tecnico")]
     public class EquipoController : Controller
     {
         private const int PageSize = 10;
         private readonly IEquipoService _equipoService;
         private readonly ICategoriaService _categoriaService;
+        private readonly IFileService _fileService;
 
-        public EquipoController(IEquipoService equipoService, ICategoriaService categoriaService)
+        public EquipoController(IEquipoService equipoService, ICategoriaService categoriaService, IFileService fileService)
         {
             _equipoService = equipoService;
             _categoriaService = categoriaService;
+            _fileService = fileService;
         }
 
         public IActionResult Index(int pageIndex = 1, string? estado = null, int? categoriaId = null)
@@ -62,7 +62,7 @@ namespace final_LAB2.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Equipo equipo, IFormFile? archivoGarantia, [FromServices] IWebHostEnvironment environment)
+        public IActionResult Create(Equipo equipo, IFormFile? archivoGarantia)
         {
             if (!ModelState.IsValid)
             {
@@ -70,28 +70,17 @@ namespace final_LAB2.Controllers
                 return View(equipo);
             }
 
-            if (archivoGarantia != null && archivoGarantia.Length > 0)
-            {
-                var carpeta = Path.Combine(environment.WebRootPath, "Uploads", "Equipos");
-                if (!Directory.Exists(carpeta))
-                {
-                    Directory.CreateDirectory(carpeta);
-                }
-
-                var nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(archivoGarantia.FileName);
-                var rutaFisica = Path.Combine(carpeta, nombreArchivo);
-
-                using (var stream = new FileStream(rutaFisica, FileMode.Create))
-                {
-                    archivoGarantia.CopyTo(stream);
-                }
-
-                equipo.RutaArchivoGarantia = $"/Uploads/Equipos/{nombreArchivo}";
-            }
-
             try
             {
+                if (archivoGarantia != null && archivoGarantia.Length > 0)
+                {
+                    equipo.RutaArchivoGarantia = _fileService.GuardarArchivo(archivoGarantia, "Equipos");
+                }
+
                 _equipoService.Crear(equipo);
+                
+                TempData["SuccessMessage"] = "Equipo creado correctamente.";
+                return RedirectToAction(nameof(Index));
             }
             catch (InvalidOperationException ex)
             {
@@ -99,9 +88,6 @@ namespace final_LAB2.Controllers
                 ViewBag.Categorias = _categoriaService.ObtenerTodos();
                 return View(equipo);
             }
-
-            TempData["SuccessMessage"] = "Equipo creado correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -120,13 +106,9 @@ namespace final_LAB2.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Equipo equipo, IFormFile? archivoGarantia, bool eliminarArchivoActual,
-                                   [FromServices] IWebHostEnvironment environment)
+        public IActionResult Edit(int id, Equipo equipo, IFormFile? archivoGarantia, bool eliminarArchivoActual)
         {
-            if (id != equipo.Id)
-            {
-                return NotFound();
-            }
+            if (id != equipo.Id) return NotFound();
 
             if (!ModelState.IsValid)
             {
@@ -134,47 +116,31 @@ namespace final_LAB2.Controllers
                 return View(equipo);
             }
 
-            var equipoActual = _equipoService.ObtenerPorId(id);
-            if (equipoActual == null)
-            {
-                TempData["ErrorMessage"] = "Equipo no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (archivoGarantia != null && archivoGarantia.Length > 0)
-            {
-                // Subir el nuevo y borrar el físico anterior (si había uno)
-                var carpeta = Path.Combine(environment.WebRootPath, "Uploads", "Equipos");
-                if (!Directory.Exists(carpeta))
-                {
-                    Directory.CreateDirectory(carpeta);
-                }
-
-                var nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(archivoGarantia.FileName);
-                var rutaFisica = Path.Combine(carpeta, nombreArchivo);
-
-                using (var stream = new FileStream(rutaFisica, FileMode.Create))
-                {
-                    archivoGarantia.CopyTo(stream);
-                }
-
-                EliminarArchivoFisico(equipoActual.RutaArchivoGarantia, environment);
-                equipo.RutaArchivoGarantia = $"/Uploads/Equipos/{nombreArchivo}";
-            }
-            else if (eliminarArchivoActual)
-            {
-                EliminarArchivoFisico(equipoActual.RutaArchivoGarantia, environment);
-                equipo.RutaArchivoGarantia = null;
-            }
-            else
-            {
-                // Ni subieron uno nuevo ni marcaron eliminar: se mantiene el que ya había
-                equipo.RutaArchivoGarantia = equipoActual.RutaArchivoGarantia;
-            }
-
             try
             {
-                _equipoService.Actualizar(equipo);
+                string? nuevaRutaGarantia = null;
+                var equipoOriginal = _equipoService.ObtenerPorId(id);
+
+                if (equipoOriginal == null)
+                {
+                    TempData["ErrorMessage"] = "Equipo no encontrado.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (archivoGarantia != null && archivoGarantia.Length > 0)
+                {
+                    _fileService.EliminarArchivo(equipoOriginal.RutaArchivoGarantia);
+                    nuevaRutaGarantia = _fileService.GuardarArchivo(archivoGarantia, "Equipos");
+                }
+                else if (eliminarArchivoActual)
+                {
+                    _fileService.EliminarArchivo(equipoOriginal.RutaArchivoGarantia);
+                }
+
+                _equipoService.Actualizar(equipo, nuevaRutaGarantia, eliminarArchivoActual);
+
+                TempData["SuccessMessage"] = "Equipo actualizado correctamente.";
+                return RedirectToAction(nameof(Index));
             }
             catch (InvalidOperationException ex)
             {
@@ -182,34 +148,20 @@ namespace final_LAB2.Controllers
                 ViewBag.Categorias = _categoriaService.ObtenerTodos();
                 return View(equipo);
             }
-
-            TempData["SuccessMessage"] = "Equipo actualizado correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
-        private static void EliminarArchivoFisico(string? rutaRelativa, IWebHostEnvironment environment)
-        {
-            if (string.IsNullOrWhiteSpace(rutaRelativa)) return;
-
-            var rutaFisica = Path.Combine(environment.WebRootPath, rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(rutaFisica))
-            {
-                System.IO.File.Delete(rutaFisica);
-            }
-        }
-
+        //para el select2 cuando apruebo una solicitud
         [HttpGet]
         public IActionResult BuscarDisponibles(string? q, int categoriaId)
         {
             try
             {
                 var equipos = _equipoService.BuscarDisponibles(q, categoriaId);
-                var resultado = equipos.Select(e => new { id = e.Id, text = $"{e.Modelo} — {e.NumeroSerie}" });
+                var resultado = equipos.Select(e => new { id = e.Id, text = $"{e.Modelo} — {e.NumeroSerie}" });// Formato esperado por Select2
                 return Json(new { results = resultado });
             }
             catch (Exception ex)
             {
-                // results siempre es lista, el error va aparte
                 return Json(new { results = new List<object>(), error = ex.Message });
             }
         }

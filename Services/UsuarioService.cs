@@ -23,7 +23,7 @@ namespace final_LAB2.Services
             }
 
             bool esValido = BCrypt.Net.BCrypt.Verify(passwordPlano, usuario.Password);
-            return esValido ? usuario : null;
+            return esValido ? usuario : null;//si es valido devuelve el usuario, sino devuelve null
         }
 
         public Usuario? ObtenerPorId(int id) => _usuarioRepository.ObtenerPorId(id);
@@ -49,7 +49,27 @@ namespace final_LAB2.Services
             _usuarioRepository.Agregar(usuario);
         }
 
-        public void ActualizarDatos(Usuario usuario) => _usuarioRepository.Actualizar(usuario);
+        public void ActualizarDatos(Usuario usuario, string? nuevoAvatarUrl = null)
+        {
+   
+            var usuarioActual = _usuarioRepository.ObtenerPorId(usuario.Id);
+            
+            if (usuarioActual == null)
+            {
+                throw new InvalidOperationException("Usuario no encontrado.");
+            }
+
+            usuarioActual.Username = usuario.Username;
+            usuarioActual.Email = usuario.Email;
+            usuarioActual.Rol = usuario.Rol;
+            
+            if (nuevoAvatarUrl != null)
+            {
+                usuarioActual.AvatarUrl = nuevoAvatarUrl;
+            }
+
+            _usuarioRepository.Actualizar(usuarioActual);
+        }
 
         public void CambiarPassword(int usuarioId, string nuevaPasswordPlano)
         {
